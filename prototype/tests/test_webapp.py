@@ -12,6 +12,7 @@ from __future__ import annotations
 import pytest
 
 from webapp import app as appmod
+from cli.game import game_state_with_test_horses
 
 HORSE_NAMES = ["全能強馬", "速度型快馬", "耐力追込馬", "平衡中庸馬", "潛力新星"]
 
@@ -25,6 +26,8 @@ def client(tmp_path):
     appmod.PENDING_TRAINING_SESSIONS = 0
     with appmod.app.test_client() as c:
         c.get("/")  # 觸發建立新遊戲
+        # 多數既有路由測試需要固定馬匹資料；玩家真正的新遊戲仍由獨立測試驗證為零匹。
+        appmod.GAME = game_state_with_test_horses()
         yield c
 
 
@@ -45,6 +48,20 @@ def test_dashboard_shows_week_1(client):
     r = client.get("/")
     assert r.status_code == 200
     assert "第 1 週" in r.get_data(as_text=True)
+
+
+def test_new_game_starts_with_no_horses_and_200000(client):
+    response = client.post("/new_game", follow_redirects=True)
+    state = appmod.get_game()
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert state.horses == []
+    assert state.jockeys == {}
+    assert state.money == pytest.approx(200000.0)
+    assert len(state.horse_market) > 0
+    assert "馬房目前沒有馬" in body
+    assert "前往馬匹市場" in body
 
 
 def test_manual_save_and_load_routes_restore_progress(client):
@@ -72,6 +89,8 @@ def test_new_game_overwrites_save_and_delete_removes_it(client):
     client.post("/new_game")
     restored = appmod.load_game(appmod.SAVE_PATH)
     assert restored.week == 1
+    assert restored.horses == []
+    assert restored.money == pytest.approx(200000.0)
 
     deleted = client.post("/delete_save")
     assert deleted.status_code == 302

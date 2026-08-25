@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from cli.game import new_game
+from cli.game import game_state_with_test_horses
 from cli.injuries import Injury
 from cli.save_service import (
     SAVE_VERSION,
@@ -20,7 +20,7 @@ from cli.vets import Vet
 
 
 def test_save_round_trip_preserves_complete_nested_state(tmp_path):
-    state = new_game()
+    state = game_state_with_test_horses()
     state.week = 37
     state.money = 54321.5
     state.horses[0].injury = Injury("測試傷病", "中傷", 3, ("速度", "力量"))

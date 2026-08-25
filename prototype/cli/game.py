@@ -144,20 +144,11 @@ class GameState:
 
 
 def new_game() -> GameState:
-    from .horses import starter_horses
-
-    horses = starter_horses()
-    jockeys = {
-        h.name: Jockey(
-            correction=round(random.uniform(0.95, 1.08), 3),
-            position_judgement=round(random.uniform(55, 85), 1),
-            rhythm_control=round(random.uniform(55, 85), 1),
-            route_choice=round(random.uniform(55, 85), 1),
-        )
-        for h in horses
-    }
+    """建立新遊戲：玩家從零匹馬、200,000資金開始，自行透過市場組建馬房。"""
+    horses = []
+    jockeys = {}
     state = GameState(horses=horses, jockeys=jockeys)
-    existing_names = {h.name for h in horses}
+    existing_names: set[str] = set()
     # 2026/8/24使用者決定補上幼駒/種馬/繁殖母馬市場後，4類市場共用同一個existing_names
     # 集合、依序生成(而不是各自獨立算一次{h.name for h in horses})，確保這4份清單彼此
     # 之間也不會撞名(BREEDING_STOCK_NAME_POOL/HORSE_NAME_POOL本身不重疊，但保險起見還是
@@ -166,6 +157,28 @@ def new_game() -> GameState:
     state.foal_market = generate_foal_market(count=FOAL_MARKET_LISTING_COUNT, existing_names=existing_names)
     state.stallion_market = generate_stallion_market(count=STALLION_MARKET_LISTING_COUNT, existing_names=existing_names)
     state.broodmare_market = generate_broodmare_market(count=BROODMARE_MARKET_LISTING_COUNT, existing_names=existing_names)
+    return state
+
+
+def game_state_with_test_horses() -> GameState:
+    """建立含五匹固定基準馬的狀態，僅供規則測試與既有財務模擬使用。
+
+    玩家真正的新遊戲一律呼叫new_game()，維持零馬開局；這個函式把測試資料與產品開局語意
+    明確分開，避免規則測試依賴市場隨機生成。
+    """
+    from .horses import starter_horses
+
+    state = new_game()
+    state.horses = starter_horses()
+    state.jockeys = {
+        horse.name: Jockey(
+            correction=round(random.uniform(0.95, 1.08), 3),
+            position_judgement=round(random.uniform(55, 85), 1),
+            rhythm_control=round(random.uniform(55, 85), 1),
+            route_choice=round(random.uniform(55, 85), 1),
+        )
+        for horse in state.horses
+    }
     return state
 
 

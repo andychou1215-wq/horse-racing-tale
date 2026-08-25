@@ -9,7 +9,7 @@ import pytest
 
 from cli import traits as T
 from cli.breeding import generate_foal
-from cli.game import breed, new_game, run_race, RaceEntry
+from cli.game import breed, game_state_with_test_horses, run_race, RaceEntry
 from cli.horse_market import (
     generate_broodmare_market_horse,
     generate_foal_market_horse,
@@ -179,7 +179,7 @@ def test_inherit_personality_non_heritable_parents_fall_back_to_random():
 # ------------------------------------------------------- starter horses wiring
 
 def test_starter_horses_have_valid_traits_and_personality():
-    state = new_game()
+    state = game_state_with_test_horses()
     for h in state.horses:
         assert len(h.traits) <= T.MAX_TRAITS
         assert all(t in T.TRAIT_NAMES for t in h.traits)
@@ -240,7 +240,7 @@ def test_generate_foal_defaults_sire_traits_to_empty_for_backward_compat():
 # ------------------------------------------------------- breed() snapshot wiring
 
 def test_breed_snapshots_sire_traits_and_personality():
-    state = new_game()
+    state = game_state_with_test_horses()
     mare = state.horses[0]
     stallion = state.horses[1]
     mare.sex, stallion.sex = "母", "公"
@@ -274,7 +274,7 @@ def test_run_race_passes_nonzero_trait_bonus_into_race_input(monkeypatch):
 
     monkeypatch.setattr(game_module, "simulate_race", spy_simulate_race)
 
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     horse.traits = ["快速起步"]  # 恆常觸發
     horse.can_race = lambda: True

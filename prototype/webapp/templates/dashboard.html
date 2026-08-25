@@ -9,6 +9,14 @@
 <p class="note">上季結果：{{ state.league_last_season_result | replace("\n", "　") }}</p>
 {% endif %}
 
+{% if not state.horses %}
+<div class="log">
+  <strong>馬房目前沒有馬。</strong>
+  新遊戲不再免費配發測試馬，請先使用 200,000 初始資金到固定價格市場選購第一匹馬；
+  購馬後才能開始訓練與報賽。
+  <p><a href="{{ url_for('horse_market_page') }}"><button type="button">前往馬匹市場</button></a></p>
+</div>
+{% else %}
 <table>
   <tr>
     <th>馬匹</th><th>性別</th><th>年齡</th><th>成長階段</th><th>個性/特性</th><th>評級</th><th>潛力</th><th>疲勞</th><th>狀態</th><th>傷病</th><th>名氣</th><th>累積獎金</th><th>訓練師</th><th>獸醫</th>
@@ -77,5 +85,6 @@
   </table>
   <button type="submit">送出本週選擇</button>
 </form>
+{% endif %}
 
 {% endblock %}

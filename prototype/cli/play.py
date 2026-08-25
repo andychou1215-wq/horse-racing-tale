@@ -88,6 +88,9 @@ def setup_trainers(state: GameState, auto: bool) -> None:
     market = generate_trainer_market(count=4)
     if auto:
         # --auto demo模式：固定聘用市場第一位，指定給第一匹馬，其餘跳過，方便快速看流程。
+        if not state.horses:
+            print("零馬開局：暫不聘用訓練師，購馬後可再到市場聘用")
+            return
         if state.money >= market[0].hire_fee:
             print(hire_trainer(state, market[0]))
             print(assign_trainer(state, state.horses[0], market[0].name))
@@ -126,6 +129,9 @@ def setup_vets(state: GameState, auto: bool) -> None:
     market = generate_vet_market(count=3)
     if auto:
         # --auto demo模式：固定聘用市場第一位，指定給第一匹馬，其餘跳過，方便快速看流程。
+        if not state.horses:
+            print("零馬開局：暫不聘用獸醫，購馬後可再到市場聘用")
+            return
         if state.money >= market[0].hire_fee:
             print(hire_vet(state, market[0]))
             print(assign_vet(state, state.horses[0], market[0].name))
@@ -303,7 +309,7 @@ def handle_breeding(state: GameState, auto: bool) -> None:
 def play(weeks: int, auto: bool) -> GameState:
     state = new_game()
     print("===== 賽馬模擬遊戲 MVP 原型 =====")
-    print(f"開局：{len(state.horses)} 匹測試馬，資金 {state.money:,.0f}\n")
+    print(f"開局：{len(state.horses)} 匹馬，資金 {state.money:,.0f}；請從馬匹市場建立馬房\n")
 
     setup_trainers(state, auto)
     setup_vets(state, auto)

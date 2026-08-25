@@ -10,7 +10,7 @@ import pytest
 from cli import growth as G
 from cli.breeding import generate_foal
 from cli.facilities import DEFAULT_LEVEL, decline_mitigation_for_level
-from cli.game import apply_weekly_stat_decline, new_game, train_horse
+from cli.game import apply_weekly_stat_decline, game_state_with_test_horses, train_horse
 from cli.horse_market import (
     generate_broodmare_market_horse,
     generate_foal_market_horse,
@@ -127,7 +127,7 @@ def test_decline_mitigation_increases_with_level_but_never_reaches_zero():
 
 def test_train_horse_uses_growth_curve_multiplier_not_fixed_constant():
     random.seed(2)
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     horse.growth_curve = "早熟"
     horse.age = 5  # 早熟型5歲已進入衰退期，倍率應該是0.3而不是舊的固定1.15
@@ -148,7 +148,7 @@ def test_train_horse_uses_growth_curve_multiplier_not_fixed_constant():
 # ------------------------------------------------------- apply_weekly_stat_decline
 
 def test_apply_weekly_stat_decline_only_affects_horses_in_decline_stage():
-    state = new_game()
+    state = game_state_with_test_horses()
     rising_horse = state.horses[0]
     rising_horse.growth_curve = "一般"
     rising_horse.age = 2  # 上升期
@@ -173,7 +173,7 @@ def test_apply_weekly_stat_decline_only_affects_horses_in_decline_stage():
 
 
 def test_apply_weekly_stat_decline_returns_log_line_for_declining_horses():
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     horse.growth_curve = "早熟"
     horse.age = 10  # 早熟型早已進入衰退期
@@ -184,7 +184,7 @@ def test_apply_weekly_stat_decline_returns_log_line_for_declining_horses():
 
 
 def test_apply_weekly_stat_decline_never_drops_stat_below_one():
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     horse.growth_curve = "早熟"
     horse.age = 10
@@ -199,7 +199,7 @@ def test_apply_weekly_stat_decline_never_drops_stat_below_one():
 
 def test_apply_weekly_stat_decline_applies_to_retired_horses_too():
     """退役種馬/繁殖母馬持續老化衰退是刻意設計(見cli/game.py docstring)。"""
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     horse.growth_curve = "早熟"
     horse.age = 10
@@ -214,7 +214,7 @@ def test_apply_weekly_stat_decline_applies_to_retired_horses_too():
 # ------------------------------------------------------- growth_curve wired into generation
 
 def test_starter_horses_have_growth_curve_assigned():
-    state = new_game()
+    state = game_state_with_test_horses()
     for horse in state.horses:
         assert horse.growth_curve in G.GROWTH_CURVE_TYPES
 

@@ -15,7 +15,7 @@ from cli.game import (
     apply_weekly_pregnancy_progression,
     assign_breeding_role,
     breed,
-    new_game,
+    game_state_with_test_horses,
     retire_horse,
 )
 from cli.horses import Horse
@@ -130,7 +130,7 @@ def test_is_inbred_false_for_unrelated_pedigree():
 # ---------------------------------------------------------------- retire_horse
 
 def test_retire_horse_marks_retired_and_clears_assignments():
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     horse.assigned_trainer = "某教練"
     horse.assigned_vet = "某獸醫"
@@ -143,7 +143,7 @@ def test_retire_horse_marks_retired_and_clears_assignments():
 
 
 def test_retire_horse_twice_gives_already_retired_message():
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     retire_horse(state, horse.name)
     msg = retire_horse(state, horse.name)
@@ -151,14 +151,14 @@ def test_retire_horse_twice_gives_already_retired_message():
 
 
 def test_retire_horse_unknown_name():
-    state = new_game()
+    state = game_state_with_test_horses()
     assert "找不到" in retire_horse(state, "不存在的馬")
 
 
 # ----------------------------------------------------------- assign_breeding_role
 
 def test_assign_breeding_role_requires_retirement_first():
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     horse.age = 4
     msg = assign_breeding_role(state, horse.name, "種馬" if horse.sex == "公" else "繁殖母馬")
@@ -167,7 +167,7 @@ def test_assign_breeding_role_requires_retirement_first():
 
 
 def test_assign_breeding_role_requires_age_range():
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     retire_horse(state, horse.name)
     horse.age = 2  # 低於BREEDING_MIN_AGE(3)
@@ -177,7 +177,7 @@ def test_assign_breeding_role_requires_age_range():
 
 
 def test_assign_breeding_role_requires_matching_sex():
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion_candidate = next(h for h in state.horses if h.sex == "母")
     retire_horse(state, stallion_candidate.name)
     stallion_candidate.age = 4
@@ -187,7 +187,7 @@ def test_assign_breeding_role_requires_matching_sex():
 
 
 def test_assign_breeding_role_success_and_cancel():
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion = next(h for h in state.horses if h.sex == "公")
     retire_horse(state, stallion.name)
     stallion.age = 5
@@ -215,7 +215,7 @@ def _setup_pair(state):
 
 
 def test_breed_requires_registered_roles():
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion = next(h for h in state.horses if h.sex == "公")
     mare = next(h for h in state.horses if h.sex == "母")
     msg = breed(state, mare.name, stallion.name)
@@ -224,7 +224,7 @@ def test_breed_requires_registered_roles():
 
 def test_breed_success_sets_pregnancy_and_deducts_cost():
     random.seed(10)  # 確保配種成功
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion, mare = _setup_pair(state)
     money_before = state.money
 
@@ -235,7 +235,7 @@ def test_breed_success_sets_pregnancy_and_deducts_cost():
 
 
 def test_breed_forces_success_records_sire_snapshot(monkeypatch):
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion, mare = _setup_pair(state)
     monkeypatch.setattr(random, "random", lambda: 0.0)  # < BREEDING_SUCCESS_CHANCE，強制成功
 
@@ -248,7 +248,7 @@ def test_breed_forces_success_records_sire_snapshot(monkeypatch):
 
 
 def test_breed_forces_failure_does_not_set_pregnancy(monkeypatch):
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion, mare = _setup_pair(state)
     monkeypatch.setattr(random, "random", lambda: 0.99)  # >= BREEDING_SUCCESS_CHANCE，強制失敗
 
@@ -259,7 +259,7 @@ def test_breed_forces_failure_does_not_set_pregnancy(monkeypatch):
 
 
 def test_breed_blocked_while_pregnant(monkeypatch):
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion, mare = _setup_pair(state)
     monkeypatch.setattr(random, "random", lambda: 0.0)
     breed(state, mare.name, stallion.name)
@@ -269,7 +269,7 @@ def test_breed_blocked_while_pregnant(monkeypatch):
 
 
 def test_breed_blocked_during_cooldown(monkeypatch):
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion, mare = _setup_pair(state)
     monkeypatch.setattr(random, "random", lambda: 0.99)  # 強制失敗，但仍會進冷卻
     breed(state, mare.name, stallion.name)
@@ -279,7 +279,7 @@ def test_breed_blocked_during_cooldown(monkeypatch):
 
 
 def test_breed_insufficient_funds():
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion, mare = _setup_pair(state)
     state.money = 0.0
 
@@ -290,7 +290,7 @@ def test_breed_insufficient_funds():
 # ---------------------------------------------------- apply_weekly_pregnancy_progression
 
 def test_pregnancy_progression_counts_down_and_gives_birth(monkeypatch):
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion, mare = _setup_pair(state)
     monkeypatch.setattr(random, "random", lambda: 0.0)
     breed(state, mare.name, stallion.name)
@@ -316,7 +316,7 @@ def test_pregnancy_progression_counts_down_and_gives_birth(monkeypatch):
 
 
 def test_pregnancy_progression_ticks_down_breeding_cooldown(monkeypatch):
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion, mare = _setup_pair(state)
     monkeypatch.setattr(random, "random", lambda: 0.99)  # 強制失敗但仍進冷卻
     breed(state, mare.name, stallion.name)
@@ -331,7 +331,7 @@ def test_pregnancy_progression_ticks_down_breeding_cooldown(monkeypatch):
 def test_newborn_foal_cannot_train_until_min_age():
     from cli.game import train_horse
 
-    state = new_game()
+    state = game_state_with_test_horses()
     foal = make_horse(name="幼駒測試", age=0)
     state.horses.append(foal)
     with pytest.raises(ValueError, match="還未滿"):

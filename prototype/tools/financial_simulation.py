@@ -65,7 +65,7 @@ from cli.game import (
     hire_trainer,
     hire_vet,
     is_race_week,
-    new_game,
+    game_state_with_test_horses,
     rest_horse,
     roll_weekly_injuries,
     run_race,
@@ -103,7 +103,7 @@ def maybe_invest_in_facilities(state: GameState, threshold: float) -> None:
 def play_one_season(
     weeks: int, trainer_count: int = 2, vet_count: int = 1, facility_invest_threshold: float = 0.0
 ) -> dict:
-    state = new_game()
+    state = game_state_with_test_horses()
     money_history = [state.money]
 
     if trainer_count > 0:

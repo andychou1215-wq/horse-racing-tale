@@ -22,7 +22,7 @@ from cli.game import (
     buy_broodmare,
     buy_horse,
     buy_stallion,
-    new_game,
+    game_state_with_test_horses,
     retire_horse,
     run_race,
 )
@@ -51,7 +51,7 @@ def test_capacity_tables_match_doc_values():
 
 
 def test_new_game_includes_three_capacity_facilities_at_default_level():
-    state = new_game()
+    state = game_state_with_test_horses()
     for f in ("馬房", "育馬場", "海外馬房"):
         assert state.facility_levels[f] == 2  # DEFAULT_LEVEL
 
@@ -67,7 +67,7 @@ def _fill_stable(state, count: int) -> None:
 
 
 def test_buy_horse_blocked_when_stable_full():
-    state = new_game()
+    state = game_state_with_test_horses()
     state.money = 10_000_000.0
     state.facility_levels["馬房"] = 1  # 容量10匹
     _fill_stable(state, 10)
@@ -79,7 +79,7 @@ def test_buy_horse_blocked_when_stable_full():
 
 
 def test_buy_horse_allowed_after_upgrading_stable():
-    state = new_game()
+    state = game_state_with_test_horses()
     state.money = 10_000_000.0
     state.facility_levels["馬房"] = 1
     _fill_stable(state, 10)
@@ -95,7 +95,7 @@ def test_breeding_birth_not_blocked_by_full_stable(monkeypatch):
     主動購買/登記，不擋懷孕中的生產週期)。"""
     from cli.game import apply_weekly_pregnancy_progression, breed
 
-    state = new_game()
+    state = game_state_with_test_horses()
     stallion = next(h for h in state.horses if h.sex == "公")
     mare = next(h for h in state.horses if h.sex == "母")
     for h in (stallion, mare):
@@ -120,7 +120,7 @@ def test_breeding_birth_not_blocked_by_full_stable(monkeypatch):
 # -------------------------------------------------------------------- 育馬場容量
 
 def test_assign_breeding_role_blocked_when_stud_farm_full():
-    state = new_game()
+    state = game_state_with_test_horses()
     state.facility_levels["育馬場"] = 1  # 容量10匹
     horses = []
     for i in range(10):
@@ -139,7 +139,7 @@ def test_assign_breeding_role_blocked_when_stud_farm_full():
 
 def test_assign_breeding_role_reassigning_same_horse_does_not_double_count():
     """重新登記同一匹馬(取消後再登記回同角色)不應該被自己先前佔用的名額卡住。"""
-    state = new_game()
+    state = game_state_with_test_horses()
     state.facility_levels["育馬場"] = 1
     horse = make_horse(name="種馬A", sex="公", age=5, retired=True)
     state.horses.append(horse)
@@ -149,7 +149,7 @@ def test_assign_breeding_role_reassigning_same_horse_does_not_double_count():
 
 
 def test_buy_stallion_blocked_when_stud_farm_full():
-    state = new_game()
+    state = game_state_with_test_horses()
     state.money = 10_000_000.0
     state.facility_levels["育馬場"] = 1
     for i in range(10):
@@ -166,7 +166,7 @@ def test_buy_stallion_blocked_when_stud_farm_full():
 
 
 def test_buy_broodmare_blocked_when_stable_full_even_if_stud_farm_has_room():
-    state = new_game()
+    state = game_state_with_test_horses()
     state.money = 10_000_000.0
     state.facility_levels["馬房"] = 1  # 容量10
     _fill_stable(state, 10)
@@ -233,7 +233,7 @@ def test_resolve_season_bottom_tier_has_no_relegation():
 # -------------------------------------------------- 整合：run_race()累積積分/冠軍數
 
 def test_run_race_awards_league_points_for_high_tier_grade():
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     horse.can_race = lambda: True
     before_points = state.league_points
@@ -244,7 +244,7 @@ def test_run_race_awards_league_points_for_high_tier_grade():
 
 
 def test_run_race_does_not_award_league_points_for_low_tier_grade():
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     horse.can_race = lambda: True
 
@@ -254,7 +254,7 @@ def test_run_race_does_not_award_league_points_for_low_tier_grade():
 
 
 def test_run_race_increments_win_count_only_on_first_place():
-    state = new_game()
+    state = game_state_with_test_horses()
     horse = state.horses[0]
     horse.can_race = lambda: True
     horse.stats = {s: 99.0 for s in ALL_STATS}  # 拉滿屬性，盡量確保拿第一
@@ -270,13 +270,13 @@ def test_run_race_increments_win_count_only_on_first_place():
 # --------------------------------------------------- apply_weekly_league_season_progression
 
 def test_season_progression_noop_before_year_end():
-    state = new_game()
+    state = game_state_with_test_horses()
     state.week = 10
     assert apply_weekly_league_season_progression(state) == []
 
 
 def test_season_progression_resets_points_and_win_counts_at_year_end():
-    state = new_game()
+    state = game_state_with_test_horses()
     state.week = A.WEEKS_PER_YEAR
     state.league_points = 500.0
     state.league_win_counts["國際GI"] = 3
@@ -290,7 +290,7 @@ def test_season_progression_resets_points_and_win_counts_at_year_end():
 
 
 def test_season_progression_awards_top3_bonus_money():
-    state = new_game()
+    state = game_state_with_test_horses()
     state.week = A.WEEKS_PER_YEAR
     state.money = 100000.0
     state.league_tier = 4

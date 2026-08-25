@@ -248,7 +248,7 @@ RACE_GROWTH_BASE_BY_GRADE = {
 }
 
 # ---- 財務（財務系統.md，MVP範圍.md：先只做「困難」難度） ----
-STARTING_MONEY = 150000.0          # 沿用 數值平衡試算.xlsx 財務模擬 分頁的起始資金假設
+STARTING_MONEY = 200000.0          # 2026/8/25：零馬開局後提高資金，讓玩家自行從市場建立馬房
 STABLE_WEEKLY_COST = 800.0         # 馬房費(固定週支出，含5匹馬)
 TRAINING_COST_PER_SESSION = 150.0  # 每次訓練/休息的訓練費
 BANKRUPTCY_THRESHOLD = -20000.0    # 負資產達此金額視為破產、遊戲結束

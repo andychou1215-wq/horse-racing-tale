@@ -25,6 +25,7 @@ from cli.game import (
     fire_vet,
     hire_trainer,
     hire_vet,
+    new_game,
     refresh_markets_if_due,
     rest_horse,
     roll_weekly_injuries,
@@ -925,3 +926,9 @@ def test_sell_horse_with_unknown_name_returns_message_without_crashing():
     state = GameState(horses=[], jockeys={}, money=50000.0)
     msg = sell_horse(state, "不存在的馬")
     assert "找不到" in msg
+def test_new_game_starts_empty_with_market_and_200000():
+    state = new_game()
+    assert state.horses == []
+    assert state.jockeys == {}
+    assert state.money == pytest.approx(200000.0)
+    assert state.horse_market
