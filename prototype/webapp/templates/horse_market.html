@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>現役馬市場</h2>
+<p class="note">依市場價值(評級+潛力餘裕+名氣+累積獎金+是否已畢業换算)固定開價，一鍵購買，
+不做競標。市場候選馬每4週會自動換新一批（下次刷新：第{{ next_refresh_week }}週），已經
+買下的馬不受刷新影響。</p>
+
+<table>
+  <tr>
+    <th>馬匹</th><th>年齡</th><th>跑法</th><th>評級</th><th>潛力</th><th>生涯狀態</th>
+    <th>名氣</th><th>累積獎金</th><th>價格</th><th></th>
+  </tr>
+  {% for h in state.horse_market %}
+  <tr>
+    <td>{{ h.name }}</td>
+    <td>{{ h.age }}歲</td>
+    <td>{{ h.pace }}</td>
+    <td>{{ "%.1f"|format(h.overall_rating()) }}</td>
+    <td>{{ h.potential_cap|int }}</td>
+    <td>
+      {% if h.career_starts == 0 %}未出賽新馬
+      {% elif h.graduated %}已畢業（可報一般賽事）
+      {% else %}未畢業{% endif %}
+    </td>
+    <td>{{ "%.1f"|format(h.fame) }}</td>
+    <td>{{ "{:,.0f}".format(h.money_earned) }}</td>
+    <td>{{ "{:,.0f}".format(prices[h.name]) }}</td>
+    <td>
+      <form class="inline" method="post" action="{{ url_for('buy_horse_route') }}">
+        <input type="hidden" name="horse_name" value="{{ h.name }}">
+        <button type="submit">購買</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  {% if not state.horse_market %}
+  <tr><td colspan="10">目前市場上沒有待售的馬</td></tr>
+  {% endif %}
+</table>
+
+<h2>幼駒市場</h2>
+<p class="note">0~1歲的幼駒，帶有虛構的NPC血統(父/母名字，純風味，不對應遊戲內任何實際
+存在的馬)，品質中樞比現役馬市場稍高，代表「專門販售的血統幼駒」。買回家後要等滿1歲才能
+開始訓練。</p>
+<table>
+  <tr>
+    <th>馬匹</th><th>性別</th><th>年齡</th><th>父</th><th>母</th><th>潛力</th><th>價格</th><th></th>
+  </tr>
+  {% for h in state.foal_market %}
+  <tr>
+    <td>{{ h.name }}</td>
+    <td>{{ h.sex }}</td>
+    <td>{{ h.age }}歲</td>
+    <td>{{ h.sire_name }}</td>
+    <td>{{ h.dam_name }}</td>
+    <td>{{ h.potential_cap|int }}</td>
+    <td>{{ "{:,.0f}".format(foal_prices[h.name]) }}</td>
+    <td>
+      <form class="inline" method="post" action="{{ url_for('buy_foal_route') }}">
+        <input type="hidden" name="horse_name" value="{{ h.name }}">
+        <button type="submit">購買</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  {% if not state.foal_market %}
+  <tr><td colspan="8">目前市場上沒有待售的幼駒</td></tr>
+  {% endif %}
+</table>
+
+<h2>種馬市場</h2>
+<p class="note">已退役、已登記為種馬、3~12歲，買回家立刻能配種，不用再自己走一輪
+「退役→登記」流程；價格 = 市場價值 + 已登記可立即配種的便利性溢價。</p>
+<table>
+  <tr>
+    <th>馬匹</th><th>年齡</th><th>評級</th><th>潛力</th><th>名氣</th><th>累積獎金</th><th>價格</th><th></th>
+  </tr>
+  {% for h in state.stallion_market %}
+  <tr>
+    <td>{{ h.name }}</td>
+    <td>{{ h.age }}歲</td>
+    <td>{{ "%.1f"|format(h.overall_rating()) }}</td>
+    <td>{{ h.potential_cap|int }}</td>
+    <td>{{ "%.1f"|format(h.fame) }}</td>
+    <td>{{ "{:,.0f}".format(h.money_earned) }}</td>
+    <td>{{ "{:,.0f}".format(stallion_prices[h.name]) }}</td>
+    <td>
+      <form class="inline" method="post" action="{{ url_for('buy_stallion_route') }}">
+        <input type="hidden" name="horse_name" value="{{ h.name }}">
+        <button type="submit">購買</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  {% if not state.stallion_market %}
+  <tr><td colspan="8">目前市場上沒有待售的種馬</td></tr>
+  {% endif %}
+</table>
+
+<h2>繁殖母馬市場</h2>
+<p class="note">已退役、已登記為繁殖母馬、3~12歲，買回家立刻能配種。</p>
+<table>
+  <tr>
+    <th>馬匹</th><th>年齡</th><th>評級</th><th>潛力</th><th>名氣</th><th>累積獎金</th><th>價格</th><th></th>
+  </tr>
+  {% for h in state.broodmare_market %}
+  <tr>
+    <td>{{ h.name }}</td>
+    <td>{{ h.age }}歲</td>
+    <td>{{ "%.1f"|format(h.overall_rating()) }}</td>
+    <td>{{ h.potential_cap|int }}</td>
+    <td>{{ "%.1f"|format(h.fame) }}</td>
+    <td>{{ "{:,.0f}".format(h.money_earned) }}</td>
+    <td>{{ "{:,.0f}".format(broodmare_prices[h.name]) }}</td>
+    <td>
+      <form class="inline" method="post" action="{{ url_for('buy_broodmare_route') }}">
+        <input type="hidden" name="horse_name" value="{{ h.name }}">
+        <button type="submit">購買</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  {% if not state.broodmare_market %}
+  <tr><td colspan="8">目前市場上沒有待售的繁殖母馬</td></tr>
+  {% endif %}
+</table>
+
+<h2>出售馬匹</h2>
+<p class="note">賣價比照市場價值現場計算，沒有議價；賣掉後這匹馬會離開馬房，指定的訓練師/
+獸醫也會一併解除。</p>
+<table>
+  <tr><th>馬匹</th><th>年齡</th><th>評級</th><th>狀態</th><th>賣價</th><th></th></tr>
+  {% for h in state.horses %}
+  <tr>
+    <td>{{ h.name }}</td>
+    <td>{{ h.age }}歲</td>
+    <td>{{ "%.1f"|format(h.overall_rating()) }}</td>
+    <td><span class="badge {{ state_grade(h.stats['健康'], h.fatigue) }}">{{ state_grade(h.stats['健康'], h.fatigue) }}</span></td>
+    <td>{{ "{:,.0f}".format(sell_prices[h.name]) }}</td>
+    <td>
+      <form class="inline" method="post" action="{{ url_for('sell_horse_route') }}"
+            onsubmit="return confirm('確定要把 {{ h.name }} 賣掉嗎？賣掉後無法復原。');">
+        <input type="hidden" name="horse_name" value="{{ h.name }}">
+        <button type="submit">出售</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  {% if not state.horses %}
+  <tr><td colspan="6">馬房目前沒有馬</td></tr>
+  {% endif %}
+</table>
+
+{% endblock %}

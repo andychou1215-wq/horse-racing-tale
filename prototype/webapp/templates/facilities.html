@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>設施升級</h2>
+<p class="note">升級設施是一次性資本支出，付完就立即生效，之後沒有像訓練師/獸醫那樣的持續週薪。
+等級越高升級費越貴。開局所有設施都是Lv2（等同這個系統補回前的固定訓練倍率1.1），
+最高可升到Lv{{ max_level }}。</p>
+
+<table>
+  <tr><th>設施</th><th>目前等級</th><th>效果</th><th>升級費用</th><th></th></tr>
+  {% for f in facility_types %}
+  <tr>
+    <td>{{ f }}</td>
+    <td>Lv{{ state.facility_levels[f] }}</td>
+    <td>
+      {% if f == "恢復中心" %}
+        每週被動疲勞回復加成（疊加訓練師「狀態管理」效果）
+      {% elif f == "醫療中心" %}
+        傷病恢復速度加成（疊加獸醫恢復效率）
+      {% elif f == "馬房" %}
+        馬房容量 {{ stable_capacity }} 匹（目前 {{ state.horses|length }} 匹）
+      {% elif f == "育馬場" %}
+        育馬場容量 {{ stud_farm_capacity }} 匹（目前登記種馬/繁殖母馬 {{ stud_farm_occupied }} 匹）
+      {% elif f == "海外馬房" %}
+        海外馬房容量 {{ overseas_stable_capacity }} 匹（海外賽事系統尚未實作，目前無法使用）
+      {% else %}
+        訓練效率倍率 {{ "%.2f"|format(1.0 + (state.facility_levels[f] - 1) * 0.1) }}
+      {% endif %}
+    </td>
+    <td>
+      {% if costs[f] is not none %}
+        {{ "{:,.0f}".format(costs[f]) }}
+      {% else %}
+        （已達最高等級）
+      {% endif %}
+    </td>
+    <td>
+      {% if costs[f] is not none %}
+      <form class="inline" method="post" action="{{ url_for('upgrade_facility_route') }}">
+        <input type="hidden" name="facility_name" value="{{ f }}">
+        <button type="submit">升級</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>退役</h2>
+<p class="note">血統與繁殖系統.md：只有已退役的馬才能登記為種馬/繁殖母馬。退役後自動取消
+指定的訓練師/獸醫，沒有退款。</p>
+<table>
+  <tr><th>馬匹</th><th>性別</th><th>年齡</th><th>評級</th><th></th></tr>
+  {% for h in active %}
+  <tr>
+    <td>{{ h.name }}</td>
+    <td>{{ h.sex }}</td>
+    <td>{{ h.age }}歲</td>
+    <td>{{ "%.1f"|format(h.overall_rating()) }}</td>
+    <td>
+      <form class="inline" method="post" action="{{ url_for('retire_horse_route') }}"
+            onsubmit="return confirm('確定要讓 {{ h.name }} 退役嗎？退役後無法再訓練/比賽。');">
+        <input type="hidden" name="horse_name" value="{{ h.name }}">
+        <button type="submit">退役</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  {% if not active %}
+  <tr><td colspan="5">目前沒有還在現役的馬</td></tr>
+  {% endif %}
+</table>
+
+<h2>登記繁殖角色</h2>
+<p class="note">已退役、3~12歲、性別對應（公馬→種馬，母馬→繁殖母馬）才能登記。</p>
+<table>
+  <tr><th>馬匹</th><th>性別</th><th>年齡</th><th></th></tr>
+  {% for h in unregistered_retired %}
+  <tr>
+    <td>{{ h.name }}</td>
+    <td>{{ h.sex }}</td>
+    <td>{{ h.age }}歲</td>
+    <td>
+      <form class="inline" method="post" action="{{ url_for('assign_breeding_role_route') }}">
+        <input type="hidden" name="horse_name" value="{{ h.name }}">
+        <input type="hidden" name="role" value="{{ '種馬' if h.sex == '公' else '繁殖母馬' }}">
+        <button type="submit">登記為{{ '種馬' if h.sex == '公' else '繁殖母馬' }}</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  {% if not unregistered_retired %}
+  <tr><td colspan="4">目前沒有還沒登記繁殖角色的退役馬</td></tr>
+  {% endif %}
+</table>
+
+<h2>種馬</h2>
+<table>
+  <tr><th>馬匹</th><th>年齡</th><th>評級</th><th>潛力</th></tr>
+  {% for h in stallions %}
+  <tr>
+    <td>{{ h.name }}</td>
+    <td>{{ h.age }}歲</td>
+    <td>{{ "%.1f"|format(h.overall_rating()) }}</td>
+    <td>{{ h.potential_cap|int }}</td>
+  </tr>
+  {% endfor %}
+  {% if not stallions %}
+  <tr><td colspan="4">目前沒有登記中的種馬</td></tr>
+  {% endif %}
+</table>
+
+<h2>繁殖母馬</h2>
+<table>
+  <tr><th>馬匹</th><th>年齡</th><th>評級</th><th>潛力</th><th>狀態</th></tr>
+  {% for h in mares %}
+  <tr>
+    <td>{{ h.name }}</td>
+    <td>{{ h.age }}歲</td>
+    <td>{{ "%.1f"|format(h.overall_rating()) }}</td>
+    <td>{{ h.potential_cap|int }}</td>
+    <td>
+      {% if h.pregnant_weeks_remaining > 0 %}懷孕中，還要{{ h.pregnant_weeks_remaining }}週生產
+      {% elif h.breeding_cooldown_weeks_remaining > 0 %}配種恢復期，還要{{ h.breeding_cooldown_weeks_remaining }}週
+      {% else %}可配種{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  {% if not mares %}
+  <tr><td colspan="5">目前沒有登記中的繁殖母馬</td></tr>
+  {% endif %}
+</table>
+
+<h2>配種</h2>
+<p class="note">配種成本 {{ "{:,.0f}".format(breeding_cost) }}，成功後約{{ gestation_weeks }}週後生產，
+每次配種嘗試後母馬需要一段恢復期才能再嘗試。</p>
+<form method="post" action="{{ url_for('breed_route') }}">
+  <table>
+    <tr>
+      <td>
+        <select name="mare_name">
+          {% for h in mares if h.pregnant_weeks_remaining == 0 and h.breeding_cooldown_weeks_remaining == 0 %}
+          <option value="{{ h.name }}">{{ h.name }}（母，評級{{ "%.1f"|format(h.overall_rating()) }}）</option>
+          {% endfor %}
+        </select>
+        ×
+        <select name="stallion_name">
+          {% for h in stallions %}
+          <option value="{{ h.name }}">{{ h.name }}（公，評級{{ "%.1f"|format(h.overall_rating()) }}）</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td><button type="submit">配種</button></td>
+    </tr>
+  </table>
+</form>
+
+{% endblock %}

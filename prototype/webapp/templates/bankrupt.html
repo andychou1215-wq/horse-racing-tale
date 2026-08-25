@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>💸 破產了</h2>
+<p>資金跌破 {{ "{:,.0f}".format(state.money) }}，馬房在第 {{ state.week }} 週宣告破產，遊戲結束。</p>
+<p>按上方「重新開局」再玩一次。</p>
+
+{% endblock %}

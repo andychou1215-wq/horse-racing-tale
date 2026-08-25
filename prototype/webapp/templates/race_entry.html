@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>第 {{ state.week }} 週 比賽日 🏁</h2>
+<p class="note">本週訓練已經送出，以下決定哪些馬要報名比賽（可以都不報名，直接送出）。</p>
+
+<form method="post" action="{{ url_for('submit_race') }}">
+  <table>
+    <tr><th>馬匹</th><th>年齡</th><th>評級</th><th>疲勞</th><th>狀態</th><th>報名分級</th><th>戰術</th></tr>
+    {% for h in state.horses %}
+    <tr>
+      <td>{{ h.name }}</td>
+      <td>{{ h.age }}歲</td>
+      <td>{{ "%.1f"|format(h.overall_rating()) }}</td>
+      <td>{{ "%.1f"|format(h.fatigue) }}</td>
+      <td><span class="badge {{ state_grade(h.stats['健康'], h.fatigue) }}">{{ state_grade(h.stats['健康'], h.fatigue) }}</span></td>
+      {% if not h.can_race() %}
+      <td colspan="2">
+        {% if h.retired %}已退役，無法出賽
+        {% elif h.injury is not none %}養傷中（{{ h.injury.name }}，剩{{ h.injury.weeks_remaining }}週），無法出賽
+        {% else %}出賽冷卻中（還要{{ h.race_cooldown_weeks_remaining }}週才能再出賽），本週無法報名{% endif %}
+      </td>
+      {% elif not eligible[h.name] %}
+      <td colspan="2">
+        {% if h.career_starts == 0 %}尚未達到新馬賽出賽年齡，目前無可報名分級
+        {% elif not h.graduated %}尚未在未勝利賽奪冠「畢業」，暫無法報名一般賽事
+        {% else %}目前評級尚未達到下一分級門檻，暫無可報名分級{% endif %}
+      </td>
+      {% else %}
+      <td>
+        <select name="grade_{{ h.name }}">
+          <option value="">不報名</option>
+          {% for g in eligible[h.name] %}
+          <option value="{{ g }}">{{ g }}</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td>
+        <select name="tactic_{{ h.name }}">
+          <option value="自由發揮">自由發揮</option>
+          <option value="保存體力">保存體力</option>
+        </select>
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </table>
+  <button type="submit">確認報名並比賽</button>
+</form>
+
+{% endblock %}

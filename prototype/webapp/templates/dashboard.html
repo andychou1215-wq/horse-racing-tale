@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>第 {{ state.week }} 週{% if is_race_week_now %} 🏁（本週為比賽週，送出訓練後將進入報名頁）{% endif %}</h2>
+<p>資金：<span class="money {{ 'low' if state.money < 30000 else '' }}">{{ "{:,.0f}".format(state.money) }}</span></p>
+<p>馬主聯盟：{{ league_tier_name }}｜本季積分 {{ "%.0f"|format(state.league_points) }}
+  （距賽季結算還有 {{ weeks_until_league_season_end }} 週）</p>
+{% if state.league_last_season_result %}
+<p class="note">上季結果：{{ state.league_last_season_result | replace("\n", "　") }}</p>
+{% endif %}
+
+<table>
+  <tr>
+    <th>馬匹</th><th>性別</th><th>年齡</th><th>成長階段</th><th>個性/特性</th><th>評級</th><th>潛力</th><th>疲勞</th><th>狀態</th><th>傷病</th><th>名氣</th><th>累積獎金</th><th>訓練師</th><th>獸醫</th>
+  </tr>
+  {% for h in state.horses %}
+  <tr>
+    <td>{{ h.name }}</td>
+    <td>{{ h.sex }}</td>
+    <td>{{ h.age }}歲</td>
+    <td>
+      {{ h.growth_curve }}
+      <span class="badge {{ 'D' if h.growth_stage() == '衰退期' else ('C' if h.growth_stage() == '停滯期' else 'S') }}">{{ h.growth_stage() }}</span>
+    </td>
+    <td>
+      {% if h.personality %}<span class="badge B">{{ h.personality }}</span>{% endif %}
+      {% for t in h.traits %}<span class="badge {{ 'D' if trait_defs[t].kind == '負面' else 'S' }}" title="{{ trait_defs[t].trigger_desc }}">{{ t }}</span>{% endfor %}
+    </td>
+    <td>{{ "%.1f"|format(h.overall_rating()) }}</td>
+    <td>{{ h.potential_cap|int }}</td>
+    <td>{{ "%.1f"|format(h.fatigue) }}</td>
+    <td><span class="badge {{ state_grade(h.stats['健康'], h.fatigue) }}">{{ state_grade(h.stats['健康'], h.fatigue) }}</span></td>
+    <td>
+      {% if h.retired %}<span class="badge D">已退役{% if h.breeding_role %}｜{{ h.breeding_role }}{% endif %}</span>
+      {% elif h.injury %}<span class="badge C">{{ h.injury.severity }}｜剩{{ h.injury.weeks_remaining }}週</span>
+      {% elif h.race_cooldown_weeks_remaining > 0 %}<span class="badge B">出賽冷卻中｜剩{{ h.race_cooldown_weeks_remaining }}週</span>
+      {% elif not h.can_train() %}<span class="badge B">幼駒｜未滿{{ h.age }}歲</span>
+      {% else %}健康{% endif %}
+      {% if h.pregnant_weeks_remaining > 0 %}<span class="badge S">懷孕中｜剩{{ h.pregnant_weeks_remaining }}週</span>{% endif %}
+    </td>
+    <td>{{ "%.1f"|format(h.fame) }}</td>
+    <td>{{ "{:,.0f}".format(h.money_earned) }}</td>
+    <td>{{ h.assigned_trainer or "（無）" }}</td>
+    <td>{{ h.assigned_vet or "（無）" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>本週訓練分配</h2>
+<form method="post" action="{{ url_for('submit_week') }}">
+  <table>
+    <tr><th>馬匹</th><th>本週動作</th><th>目前屬性(可訓練)</th></tr>
+    {% for h in state.horses %}
+    <tr>
+      <td>{{ h.name }}</td>
+      {% if h.retired %}
+      <td colspan="2">已退役，本週略過</td>
+      {% elif h.injury %}
+      <td colspan="2">養傷中（{{ h.injury.name }}，剩{{ h.injury.weeks_remaining }}週），本週自動休養</td>
+      {% elif not h.can_train() %}
+      <td colspan="2">幼駒還未滿{{ h.age }}歲，本週略過</td>
+      {% else %}
+      <td>
+        <select name="choice_{{ h.name }}">
+          <option value="休息">休息</option>
+          {% for stat in trainable_stats %}
+          <option value="{{ stat }}">{{ stat }}（{{ "%.1f"|format(h.stats[stat]) }}）</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td style="font-size:0.8rem; color:#555;">
+        {% for stat in trainable_stats %}{{ stat }} {{ "%.0f"|format(h.stats[stat]) }}{% if not loop.last %}／{% endif %}{% endfor %}
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </table>
+  <button type="submit">送出本週選擇</button>
+</form>
+
+{% endblock %}

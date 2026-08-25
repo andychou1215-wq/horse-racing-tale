@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>訓練師市場</h2>
+<p class="note">聘用訓練師後每週要付固定薪水，指定給馬匹訓練時對應專長的屬性會有加成。
+一個訓練師最多管理12匹馬，超過8匹訓練效率會下降。市場候選人每4週會自動換新一批
+（下次刷新：第{{ next_refresh_week }}週），已聘用的訓練師不受刷新影響。</p>
+
+<table>
+  <tr><th>訓練師</th><th>專長</th><th>等級</th><th>聘用費</th><th>週薪</th><th></th></tr>
+  {% for t in market %}
+  <tr>
+    <td>{{ t.name }}</td>
+    <td>{{ t.specialty }}</td>
+    <td>Lv{{ t.skill_level }}</td>
+    <td>{{ "{:,.0f}".format(t.hire_fee) }}</td>
+    <td>{{ "{:,.0f}".format(t.weekly_salary) }}</td>
+    <td>
+      <form class="inline" method="post" action="{{ url_for('hire_trainer_route') }}">
+        <input type="hidden" name="trainer_name" value="{{ t.name }}">
+        <button type="submit">聘用</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  {% if not market %}
+  <tr><td colspan="6">目前市場上的訓練師都已經聘用了</td></tr>
+  {% endif %}
+</table>
+
+<h2>已聘用訓練師</h2>
+<p class="note">解雇後不再支付週薪，原本指定的馬匹會取消指定；不退還當初的聘用費。</p>
+<table>
+  <tr><th>訓練師</th><th>專長</th><th>等級</th><th>週薪</th><th>目前管理馬匹數</th><th></th></tr>
+  {% for t in state.trainers %}
+  <tr>
+    <td>{{ t.name }}</td>
+    <td>{{ t.specialty }}</td>
+    <td>Lv{{ t.skill_level }}</td>
+    <td>{{ "{:,.0f}".format(t.weekly_salary) }}</td>
+    <td>{{ state.horses|selectattr("assigned_trainer", "equalto", t.name)|list|length }}</td>
+    <td>
+      <form class="inline" method="post" action="{{ url_for('fire_trainer_route') }}"
+            onsubmit="return confirm('確定要解雇 {{ t.name }} 嗎？聘用費不會退還。');">
+        <input type="hidden" name="trainer_name" value="{{ t.name }}">
+        <button type="submit">解雇</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  {% if not state.trainers %}
+  <tr><td colspan="6">尚未聘用任何訓練師（訓練倍率維持基礎值1.0）</td></tr>
+  {% endif %}
+</table>
+
+<h2>指定訓練師給馬匹</h2>
+<form method="post" action="{{ url_for('assign_trainer_route') }}">
+  <table>
+    <tr><th>馬匹</th><th>指定訓練師</th></tr>
+    {% for h in state.horses %}
+    <tr>
+      <td>{{ h.name }}</td>
+      <td>
+        <select name="trainer_{{ h.name }}">
+          <option value="">（不指定）</option>
+          {% for t in state.trainers %}
+          <option value="{{ t.name }}" {% if h.assigned_trainer == t.name %}selected{% endif %}>
+            {{ t.name }}（{{ t.specialty }} Lv{{ t.skill_level }}）
+          </option>
+          {% endfor %}
+        </select>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  <button type="submit">確認指定</button>
+</form>
+
+{% endblock %}
