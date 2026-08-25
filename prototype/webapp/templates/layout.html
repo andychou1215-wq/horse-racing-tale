@@ -37,9 +37,20 @@
       <a href="{{ url_for('facilities_page') }}"><button type="button">設施升級</button></a>
       <a href="{{ url_for('horse_market_page') }}"><button type="button">馬匹市場</button></a>
       <a href="{{ url_for('breeding_page') }}"><button type="button">繁殖</button></a>
+      <form class="inline" method="post" action="{{ url_for('save_game_route') }}">
+        <button type="submit">儲存</button>
+      </form>
+      <form class="inline" method="post" action="{{ url_for('load_game_route') }}"
+            onsubmit="return confirm('確定要捨棄尚未儲存的變更並讀取存檔嗎？');">
+        <button type="submit">讀取</button>
+      </form>
       <form class="inline" method="post" action="{{ url_for('new_game_route') }}"
-            onsubmit="return confirm('確定要放棄目前進度、重新開局嗎？');">
-        <button type="submit">重新開局</button>
+            onsubmit="return confirm('確定要覆蓋目前存檔並重新開局嗎？');">
+        <button type="submit">新遊戲</button>
+      </form>
+      <form class="inline" method="post" action="{{ url_for('delete_save_route') }}"
+            onsubmit="return confirm('確定永久刪除目前存檔嗎？這個操作無法復原。');">
+        <button type="submit">刪除存檔</button>
       </form>
     </div>
   </div>

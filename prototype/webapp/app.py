@@ -19,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, has_request_context, redirect, render_template, request, session, url_for
 
 from cli import assumptions as A
 from cli import traits as T
@@ -71,6 +71,7 @@ from cli.game import (
 from cli.horse_market import breeding_stock_value as horse_breeding_stock_value
 from cli.horse_market import market_value as horse_market_value
 from cli.horses import TRAINABLE_STATS
+from cli.save_service import SaveError, backup_corrupt_save, delete_save, load_game, save_game
 
 app = Flask(__name__)
 app.secret_key = "racing-sim-mvp-webapp-dev-key"  # 僅供本機開發用，非正式部署密鑰
@@ -79,6 +80,7 @@ app.secret_key = "racing-sim-mvp-webapp-dev-key"  # 僅供本機開發用，非�
 GAME: GameState | None = None
 PENDING_TRAINING_LOG: list[str] = []  # 訓練階段做完、比賽階段還沒做時，暫存本週訓練結果
 PENDING_TRAINING_SESSIONS = 0  # 同上，暫存本週訓練次數(供比賽週最終的週結算費用計算用)
+SAVE_PATH = Path(__file__).resolve().parent.parent / "data" / "savegame.json"
 # 訓練師/獸醫市場清單改存在 GameState.trainer_market / vet_market 裡(見 cli/game.py)，
 # 不再是webapp自己的全域變數——這樣市場才能跟著 state.week 定期刷新(見
 # refresh_markets_if_due)，而不是開新局才重生一次。
@@ -87,8 +89,30 @@ PENDING_TRAINING_SESSIONS = 0  # 同上，暫存本週訓練次數(供比賽週�
 def get_game() -> GameState:
     global GAME
     if GAME is None:
-        GAME = new_game()
+        try:
+            GAME = load_game(SAVE_PATH)
+            if has_request_context():
+                flash(f"已載入第{GAME.week}週存檔")
+        except FileNotFoundError:
+            GAME = new_game()
+        except SaveError as exc:
+            backup = backup_corrupt_save(SAVE_PATH)
+            GAME = new_game()
+            if has_request_context():
+                detail = f"，損毀檔已備份為 {backup.name}" if backup else ""
+                flash(f"存檔讀取失敗，已安全開啟新遊戲{detail}：{exc}")
     return GAME
+
+
+def autosave(state: GameState) -> bool:
+    """儲存目前狀態；網頁請求中失敗時顯示提示，不讓遊戲操作本身崩潰。"""
+    try:
+        save_game(state, SAVE_PATH)
+        return True
+    except SaveError as exc:
+        if has_request_context():
+            flash(f"自動存檔失敗：{exc}")
+        return False
 
 
 @app.route("/")
@@ -110,10 +134,48 @@ def dashboard():
 
 @app.route("/new_game", methods=["POST"])
 def new_game_route():
-    global GAME, PENDING_TRAINING_LOG
+    global GAME, PENDING_TRAINING_LOG, PENDING_TRAINING_SESSIONS
     GAME = new_game()
     PENDING_TRAINING_LOG = []
+    PENDING_TRAINING_SESSIONS = 0
+    autosave(GAME)
     flash("新的一局開始了！")
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/save_game", methods=["POST"])
+def save_game_route():
+    state = get_game()
+    if autosave(state):
+        flash(f"遊戲已儲存（第{state.week}週）")
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/load_game", methods=["POST"])
+def load_game_route():
+    global GAME, PENDING_TRAINING_LOG, PENDING_TRAINING_SESSIONS
+    try:
+        GAME = load_game(SAVE_PATH)
+        PENDING_TRAINING_LOG = []
+        PENDING_TRAINING_SESSIONS = 0
+        flash(f"已讀取存檔（第{GAME.week}週）")
+    except FileNotFoundError:
+        flash("目前沒有可讀取的存檔")
+    except SaveError as exc:
+        backup = backup_corrupt_save(SAVE_PATH)
+        detail = f"；損毀檔已備份為 {backup.name}" if backup else ""
+        flash(f"讀取失敗{detail}：{exc}")
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/delete_save", methods=["POST"])
+def delete_save_route():
+    global GAME, PENDING_TRAINING_LOG, PENDING_TRAINING_SESSIONS
+    removed = delete_save(SAVE_PATH)
+    GAME = new_game()
+    PENDING_TRAINING_LOG = []
+    PENDING_TRAINING_SESSIONS = 0
+    flash("存檔已刪除，回到尚未儲存的新遊戲" if removed else "沒有找到存檔，已回到新遊戲")
     return redirect(url_for("dashboard"))
 
 
@@ -138,6 +200,7 @@ def hire_trainer_route():
         flash(f"找不到訓練師「{trainer_name}」")
     else:
         flash(hire_trainer(state, trainer))
+        autosave(state)
     return redirect(url_for("trainers_page"))
 
 
@@ -149,6 +212,7 @@ def assign_trainer_route():
         if trainer_name == horse.assigned_trainer:
             continue  # 沒有變更就不用重複顯示訊息
         flash(assign_trainer(state, horse, trainer_name))
+    autosave(state)
     return redirect(url_for("trainers_page"))
 
 
@@ -157,6 +221,7 @@ def fire_trainer_route():
     state = get_game()
     trainer_name = request.form.get("trainer_name", "")
     flash(fire_trainer(state, trainer_name))
+    autosave(state)
     return redirect(url_for("trainers_page"))
 
 
@@ -181,6 +246,7 @@ def hire_vet_route():
         flash(f"找不到獸醫「{vet_name}」")
     else:
         flash(hire_vet(state, vet))
+        autosave(state)
     return redirect(url_for("vets_page"))
 
 
@@ -192,6 +258,7 @@ def assign_vet_route():
         if vet_name == horse.assigned_vet:
             continue  # 沒有變更就不用重複顯示訊息
         flash(assign_vet(state, horse, vet_name))
+    autosave(state)
     return redirect(url_for("vets_page"))
 
 
@@ -200,6 +267,7 @@ def fire_vet_route():
     state = get_game()
     vet_name = request.form.get("vet_name", "")
     flash(fire_vet(state, vet_name))
+    autosave(state)
     return redirect(url_for("vets_page"))
 
 
@@ -229,6 +297,7 @@ def upgrade_facility_route():
     state = get_game()
     facility_name = request.form.get("facility_name", "")
     flash(upgrade_facility(state, facility_name))
+    autosave(state)
     return redirect(url_for("facilities_page"))
 
 
@@ -261,6 +330,7 @@ def buy_horse_route():
     state = get_game()
     horse_name = request.form.get("horse_name", "")
     flash(buy_horse(state, horse_name))
+    autosave(state)
     return redirect(url_for("horse_market_page"))
 
 
@@ -269,6 +339,7 @@ def buy_foal_route():
     state = get_game()
     horse_name = request.form.get("horse_name", "")
     flash(buy_foal(state, horse_name))
+    autosave(state)
     return redirect(url_for("horse_market_page"))
 
 
@@ -277,6 +348,7 @@ def buy_stallion_route():
     state = get_game()
     horse_name = request.form.get("horse_name", "")
     flash(buy_stallion(state, horse_name))
+    autosave(state)
     return redirect(url_for("horse_market_page"))
 
 
@@ -285,6 +357,7 @@ def buy_broodmare_route():
     state = get_game()
     horse_name = request.form.get("horse_name", "")
     flash(buy_broodmare(state, horse_name))
+    autosave(state)
     return redirect(url_for("horse_market_page"))
 
 
@@ -293,6 +366,7 @@ def sell_horse_route():
     state = get_game()
     horse_name = request.form.get("horse_name", "")
     flash(sell_horse(state, horse_name))
+    autosave(state)
     return redirect(url_for("horse_market_page"))
 
 
@@ -317,6 +391,7 @@ def retire_horse_route():
     state = get_game()
     horse_name = request.form.get("horse_name", "")
     flash(retire_horse(state, horse_name))
+    autosave(state)
     return redirect(url_for("breeding_page"))
 
 
@@ -326,6 +401,7 @@ def assign_breeding_role_route():
     horse_name = request.form.get("horse_name", "")
     role = request.form.get("role", "") or None
     flash(assign_breeding_role(state, horse_name, role))
+    autosave(state)
     return redirect(url_for("breeding_page"))
 
 
@@ -335,6 +411,7 @@ def breed_route():
     mare_name = request.form.get("mare_name", "")
     stallion_name = request.form.get("stallion_name", "")
     flash(breed(state, mare_name, stallion_name))
+    autosave(state)
     return redirect(url_for("breeding_page"))
 
 
@@ -389,6 +466,7 @@ def submit_week():
         flash(refresh_msg)
     if state.bankrupt:
         flash(f"資金跌破 {A.BANKRUPTCY_THRESHOLD:,.0f}，宣告破產！")
+    autosave(state)
     return redirect(url_for("dashboard"))
 
 
@@ -450,6 +528,7 @@ def submit_race():
         flash(refresh_msg)
     if state.bankrupt:
         flash(f"資金跌破 {A.BANKRUPTCY_THRESHOLD:,.0f}，宣告破產！")
+    autosave(state)
     return redirect(url_for("dashboard"))
 
 

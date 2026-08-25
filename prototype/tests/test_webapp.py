@@ -17,8 +17,9 @@ HORSE_NAMES = ["全能強馬", "速度型快馬", "耐力追込馬", "平衡中�
 
 
 @pytest.fixture()
-def client():
+def client(tmp_path):
     appmod.app.config["TESTING"] = True
+    appmod.SAVE_PATH = tmp_path / "savegame.json"
     appmod.GAME = None
     appmod.PENDING_TRAINING_LOG = []
     appmod.PENDING_TRAINING_SESSIONS = 0
@@ -44,6 +45,56 @@ def test_dashboard_shows_week_1(client):
     r = client.get("/")
     assert r.status_code == 200
     assert "第 1 週" in r.get_data(as_text=True)
+
+
+def test_manual_save_and_load_routes_restore_progress(client):
+    game = appmod.get_game()
+    game.week = 23
+    game.money = 76543.0
+    saved = client.post("/save_game")
+    assert saved.status_code == 302
+    assert appmod.SAVE_PATH.exists()
+
+    game.week = 99
+    game.money = 1.0
+    loaded = client.post("/load_game")
+
+    assert loaded.status_code == 302
+    assert appmod.get_game().week == 23
+    assert appmod.get_game().money == pytest.approx(76543.0)
+
+
+def test_new_game_overwrites_save_and_delete_removes_it(client):
+    game = appmod.get_game()
+    game.week = 15
+    client.post("/save_game")
+
+    client.post("/new_game")
+    restored = appmod.load_game(appmod.SAVE_PATH)
+    assert restored.week == 1
+
+    deleted = client.post("/delete_save")
+    assert deleted.status_code == 302
+    assert not appmod.SAVE_PATH.exists()
+    assert appmod.get_game().week == 1
+
+
+def test_week_completion_autosaves(client):
+    advance_one_week(client)
+    restored = appmod.load_game(appmod.SAVE_PATH)
+    assert restored.week == 2
+
+
+def test_corrupt_save_is_backed_up_and_starts_new_game(client):
+    appmod.SAVE_PATH.write_text("not-json", encoding="utf-8")
+    appmod.GAME = None
+
+    body = client.get("/").get_data(as_text=True)
+
+    assert "存檔讀取失敗" in body
+    assert appmod.get_game().week == 1
+    assert not appmod.SAVE_PATH.exists()
+    assert list(appmod.SAVE_PATH.parent.glob("savegame.corrupt-*.json"))
 
 
 def test_submit_week_always_redirects_to_race_entry(client):

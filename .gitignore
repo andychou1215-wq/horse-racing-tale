@@ -18,3 +18,8 @@ Thumbs.db
 
 # Generated reports
 prototype/tools/*.csv
+
+# Local save data (reference_horses.json remains tracked)
+prototype/data/savegame.json
+prototype/data/savegame.json.tmp
+prototype/data/savegame.corrupt-*.json
