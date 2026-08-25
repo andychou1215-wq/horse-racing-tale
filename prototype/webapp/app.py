@@ -391,7 +391,13 @@ def submit_week():
 def race_entry():
     state = get_game()
     eligible = {h.name: eligible_grades(h) for h in state.horses if h.can_race()}
-    return render_template("race_entry.html", state=state, eligible=eligible, state_grade=A.state_grade)
+    return render_template(
+        "race_entry.html",
+        state=state,
+        eligible=eligible,
+        state_grade=A.state_grade,
+        maiden_race_age=A.MAIDEN_RACE_AGE,
+    )
 
 
 @app.route("/submit_race", methods=["POST"])

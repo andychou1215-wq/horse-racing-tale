@@ -311,14 +311,13 @@ def eligible_grades(horse: Horse) -> list[str]:
     - 新馬賽：限MAIDEN_RACE_AGE(2)歲、且生涯從未出賽過(career_starts==0)的馬才能報名，
       出賽過一次(不論名次)就永久不能再報名新馬賽——對應「只要參加過新馬賽的馬匹便不可
       再參加新馬賽」。
-    - 未勝利賽：限尚未「畢業」(not graduated)的馬報名。正常情況是已跑過但未贏新馬賽；
-      若從未出賽的馬已超過新馬賽年齡，也可直接從未勝利賽出道，避免永久失去參賽資格。
+    - 未勝利賽：限已經出賽過(career_starts>=1)、但還沒「畢業」(not graduated)的馬報名。
       贏得未勝利賽會在run_race()裡把graduated設為True，之後不能再回頭報名未勝利賽。
     - 地方一般賽以上（一般賽事）：限已經「畢業」(graduated，代表贏過新馬賽或未勝利賽)的馬
       才能報名——對應「新馬賽獲勝的馬獲得參加一般賽事的權利」。
 
-    2026/8/25補救規則：超過MAIDEN_RACE_AGE且career_starts==0的馬可報名未勝利賽；仍處於
-    新馬賽年齡的初次出賽馬只可報名新馬賽，不會同時出現在兩種分級。
+    2026/8/25最終規則：從未出賽的馬若錯過新馬賽年齡，會在年齡結算時自動退役，再由玩家
+    透過既有繁殖頁面/CLI選擇退役路線；不開放超齡馬直接從未勝利賽出道。
     """
     rating = horse.overall_rating()
     result = []
@@ -329,9 +328,7 @@ def eligible_grades(horse: Horse) -> list[str]:
             if horse.age == A.MAIDEN_RACE_AGE and horse.career_starts == 0:
                 result.append(grade)
         elif grade == "未勝利賽":
-            if not horse.graduated and (
-                horse.career_starts >= 1 or horse.age > A.MAIDEN_RACE_AGE
-            ):
+            if horse.career_starts >= 1 and not horse.graduated:
                 result.append(grade)
         else:
             if horse.graduated:
@@ -1054,7 +1051,9 @@ def apply_weekly_age_progression(state: GameState) -> list[str]:
     分別追蹤生日。用 state.week % WEEKS_PER_YEAR == 0 判斷「這週剛好滿一年」，跟
     apply_weekly_race_cooldown_recovery一樣、要在 state.week 遞增到下一週之前呼叫，
     才會精準對應「滿52週」這個時間點(第52週結算時觸發，第53週開局就是新的歲數)。
-    退役馬不再計算年齡增長(對玩法沒有意義，也避免無謂的資料變動)。
+    退役馬不再計算年齡增長(對玩法沒有意義，也避免無謂的資料變動)。若一匹從未出賽的馬
+    在本次結算後超過新馬賽年齡，立即自動退役並清除訓練師/獸醫指派；繁殖角色保持None，
+    由玩家之後在繁殖頁面或CLI選擇登記為種馬/繁殖母馬，或維持一般退役狀態。
     """
     if state.week % A.WEEKS_PER_YEAR != 0:
         return []
@@ -1064,6 +1063,12 @@ def apply_weekly_age_progression(state: GameState) -> list[str]:
             continue
         horse.age += 1
         lines.append(f"{horse.name}：滿{A.WEEKS_PER_YEAR}週，年齡增長為{horse.age}歲")
+        if horse.age > A.MAIDEN_RACE_AGE and horse.career_starts == 0:
+            retire_horse(state, horse.name)
+            lines.append(
+                f"{horse.name}：已錯過新馬賽年齡且從未出賽，自動退役；"
+                "請選擇退役路線（種馬/繁殖母馬或維持一般退役）"
+            )
     return lines
 
 

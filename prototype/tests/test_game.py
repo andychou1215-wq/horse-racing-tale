@@ -683,13 +683,10 @@ def test_graduated_horse_can_enter_一般賽事_but_not_新馬賽_or_未勝利�
     assert "地方一般賽" in grades
 
 
-def test_horse_that_missed_maiden_age_can_debut_in_未勝利賽():
-    """超過新馬賽年齡卻從未出賽的馬，可直接報未勝利賽，避免永久卡死。"""
+def test_horse_that_missed_maiden_age_cannot_debut_in_未勝利賽():
+    """超齡未出賽馬不開放從未勝利賽出道；年齡結算會把牠自動退役。"""
     horse = make_horse(age=A.MAIDEN_RACE_AGE + 1, career_starts=0, graduated=False)
-    grades = eligible_grades(horse)
-    assert "新馬賽" not in grades
-    assert "未勝利賽" in grades
-    assert "地方一般賽" not in grades
+    assert eligible_grades(horse) == []
 
 
 def test_maiden_age_first_time_horse_does_not_see_未勝利賽():
@@ -773,6 +770,38 @@ def test_age_progression_skips_retired_horses():
     state.week = A.WEEKS_PER_YEAR
     apply_weekly_age_progression(state)
     assert horse.age == original_age
+
+
+def test_age_progression_auto_retires_horse_that_missed_maiden_debut():
+    horse = make_horse(
+        age=A.MAIDEN_RACE_AGE,
+        career_starts=0,
+        graduated=False,
+        assigned_trainer="測試訓練師",
+        assigned_vet="測試獸醫",
+    )
+    state = GameState(horses=[horse], jockeys={})
+    state.week = A.WEEKS_PER_YEAR
+
+    lines = apply_weekly_age_progression(state)
+
+    assert horse.age == A.MAIDEN_RACE_AGE + 1
+    assert horse.retired is True
+    assert horse.breeding_role is None
+    assert horse.assigned_trainer is None
+    assert horse.assigned_vet is None
+    assert any("自動退役" in line and "選擇退役路線" in line for line in lines)
+
+
+def test_age_progression_does_not_auto_retire_horse_with_career_start():
+    horse = make_horse(age=A.MAIDEN_RACE_AGE, career_starts=1, graduated=False)
+    state = GameState(horses=[horse], jockeys={})
+    state.week = A.WEEKS_PER_YEAR
+
+    apply_weekly_age_progression(state)
+
+    assert horse.age == A.MAIDEN_RACE_AGE + 1
+    assert horse.retired is False
 
 
 # ---------------------------------------------------------- 現役馬市場（新增）

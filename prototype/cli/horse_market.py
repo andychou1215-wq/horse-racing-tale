@@ -94,8 +94,8 @@ def generate_market_horse(existing_names: set[str]) -> Horse:
 
     年齡2~6歲隨機。2歲馬有4成機率是「還沒出賽的原石」(career_starts=0、graduated=
     False，可以直接報名新馬賽賭一把)，其餘(含所有3歲以上)一律視為已經打出成績、能報
-    一般賽事的「畢業」現役馬。雖然超齡未出賽馬現在可直接報名未勝利賽，市場仍刻意讓
-    3歲以上現役馬都帶有戰績且已畢業，維持商品定位與市場價值的一致性。
+    一般賽事的「畢業」現役馬。超齡未出賽馬依規則會自動退役；市場仍刻意讓3歲以上
+    現役馬都帶有戰績且已畢業，維持商品定位與市場價值的一致性。
     """
     quality_center = random.uniform(40, 85)
     stats = {s: _rand_stat(quality_center) for s in ALL_STATS}

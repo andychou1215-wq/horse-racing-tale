@@ -22,7 +22,8 @@
       </td>
       {% elif not eligible[h.name] %}
       <td colspan="2">
-        {% if h.career_starts == 0 %}尚未達到新馬賽出賽年齡，目前無可報名分級
+        {% if h.career_starts == 0 and h.age > maiden_race_age %}已錯過新馬賽年齡，將於年度結算自動退役
+        {% elif h.career_starts == 0 %}尚未達到新馬賽出賽年齡，目前無可報名分級
         {% elif not h.graduated %}尚未在未勝利賽奪冠「畢業」，暫無法報名一般賽事
         {% else %}目前評級尚未達到下一分級門檻，暫無可報名分級{% endif %}
       </td>
