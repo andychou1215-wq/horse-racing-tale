@@ -105,6 +105,9 @@ class GameState:
     broodmare_market: list[Horse] = field(default_factory=list)
     # 2026/8/24使用者決定補上GDD市場章節剩下的3類(見cli/horse_market.py模組docstring)，
     # 跟horse_market同一套刷新節奏、同樣理由用空清單default_factory再由new_game()明確生成。
+    transaction_history: list[str] = field(default_factory=list)
+    # 固定價格市場最近交易紀錄，供市場畫面顯示。只記錄成功交易，最新一筆在最前面，
+    # 最多保留20筆，避免長週期遊玩時狀態無限制增長。
 
     league_tier: int = L.LOWEST_TIER
     # 2026/8/25使用者決定補上馬主聯盟升降級系統(見cli/league.py模組docstring)：不做
@@ -685,6 +688,8 @@ def buy_horse(state: GameState, horse_name: str) -> str:
         rhythm_control=round(random.uniform(55, 85), 1),
         route_choice=round(random.uniform(55, 85), 1),
     )
+    state.transaction_history.insert(0, f"第{state.week}週｜購入現役馬 {horse.name}｜-{price:,.0f}")
+    del state.transaction_history[20:]
     return f"買下了{horse.name}！花費{price:,.0f}，目前馬房共有{len(state.horses)}匹馬"
 
 
@@ -726,6 +731,8 @@ def _buy_breeding_stock(
         rhythm_control=round(random.uniform(55, 85), 1),
         route_choice=round(random.uniform(55, 85), 1),
     )
+    state.transaction_history.insert(0, f"第{state.week}週｜購入{label} {horse.name}｜-{price:,.0f}")
+    del state.transaction_history[20:]
     role_note = f"，已登記為{horse.breeding_role}，可直接配種" if horse.breeding_role else ""
     return f"買下了{horse.name}（{label}）！花費{price:,.0f}{role_note}，目前馬房共有{len(state.horses)}匹馬"
 
@@ -760,6 +767,8 @@ def sell_horse(state: GameState, horse_name: str) -> str:
     state.money += price
     state.horses = [h for h in state.horses if h.name != horse_name]
     state.jockeys.pop(horse_name, None)
+    state.transaction_history.insert(0, f"第{state.week}週｜出售 {horse.name}｜+{price:,.0f}")
+    del state.transaction_history[20:]
     return f"賣掉了{horse.name}，收入{price:,.0f}"
 
 

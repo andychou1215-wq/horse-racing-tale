@@ -248,6 +248,11 @@ def horse_market_page():
         sell_prices={h.name: horse_market_value(h) for h in state.horses},
         next_refresh_week=state.last_market_refresh_week + MARKET_REFRESH_INTERVAL_WEEKS,
         state_grade=A.state_grade,
+        stable_capacity=facility_stable_capacity(state.facility_levels["馬房"]),
+        stud_farm_capacity=facility_stud_farm_capacity(state.facility_levels["育馬場"]),
+        stud_farm_occupied=sum(1 for h in state.horses if h.breeding_role is not None),
+        eligible_grades=eligible_grades,
+        trait_kinds={name: definition.kind for name, definition in T.TRAIT_DEFS.items()},
     )
 
 

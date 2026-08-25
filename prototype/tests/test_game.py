@@ -872,6 +872,7 @@ def test_buy_horse_deducts_money_adds_to_stable_and_removes_from_market():
     assert any(h.name == "市場馬測試" for h in state.horses)
     assert not any(h.name == "市場馬測試" for h in state.horse_market)
     assert "市場馬測試" in state.jockeys
+    assert state.transaction_history == [f"第1週｜購入現役馬 市場馬測試｜-{price:,.0f}"]
 
 
 def test_buy_horse_skips_when_money_insufficient():
@@ -903,6 +904,21 @@ def test_sell_horse_adds_money_and_removes_from_stable_and_jockeys():
     assert state.money == pytest.approx(50000.0 + price)
     assert not any(h.name == "待售馬" for h in state.horses)
     assert "待售馬" not in state.jockeys
+    assert state.transaction_history == [f"第1週｜出售 待售馬｜+{price:,.0f}"]
+
+
+def test_transaction_history_keeps_latest_twenty_successful_trades():
+    state = GameState(horses=[], jockeys={})
+    state.transaction_history = [f"舊交易{i}" for i in range(20)]
+    horse = make_horse(name="第21筆", potential_cap=80)
+    state.horse_market = [horse]
+    state.money = 100000.0
+
+    buy_horse(state, horse.name)
+
+    assert len(state.transaction_history) == 20
+    assert state.transaction_history[0].startswith("第1週｜購入現役馬 第21筆")
+    assert "舊交易19" not in state.transaction_history
 
 
 def test_sell_horse_with_unknown_name_returns_message_without_crashing():

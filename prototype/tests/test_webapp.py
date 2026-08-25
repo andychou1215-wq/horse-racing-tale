@@ -129,6 +129,11 @@ def test_horse_market_page_shows_listings_and_links_back_to_dashboard(client):
     game = appmod.get_game()
     for h in game.horse_market:
         assert h.name in body
+    assert "比較已選" in body
+    assert "最低價格" in body
+    assert "有正面特性" in body
+    assert "可立即出賽／繁殖" in body
+    assert "最近交易" in body
 
 
 def test_buy_horse_route_adds_to_stable_and_removes_from_market(client):
@@ -141,6 +146,8 @@ def test_buy_horse_route_adds_to_stable_and_removes_from_market(client):
     assert any(h.name == target for h in game.horses)
     assert not any(h.name == target for h in game.horse_market)
     assert target in game.jockeys
+    assert target in game.transaction_history[0]
+    assert "購入現役馬" in game.transaction_history[0]
 
 
 def test_sell_horse_route_removes_from_stable_and_adds_money(client):
