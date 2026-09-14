@@ -1,5 +1,8 @@
 # 專案總覽
 
+## 遊戲名稱
+**賽馬物語**（英文：Horse Racing Tale）。GitHub repo 建議命名：`horse-racing-tale`。
+
 ## 遊戲定位
 網頁小遊戲，單機、單場景。一輪遊戲 = 一隻馬從出道到引退的完整生涯，約10-20分鐘可玩完。純前端 HTML5+JavaScript，localStorage存檔，暫不需後端。初版採純文字/資料呈現風美術（art-style.md）。
 
@@ -49,7 +52,7 @@
 game-loop.md｜horse-generation.md｜training-mechanics.md｜race-simulation.md｜events.md｜race-calendar.md｜ai-opponents.md｜retirement-summary.md｜art-style.md｜data-structure.md｜ui-flow.md｜overview.md（本檔）
 
 ## 目前狀態
-MVP所需的核心數值邏輯（生涯迴圈、訓練公式、比賽模擬、事件、馬匹生成、賽事日曆、AI對手、獎金/聲望基準值、引退結算）、美術風格方向、資料結構、UI流程規劃已全數定案，規格面完整，可以直接開始動手實作原型。
+MVP所需的核心數值邏輯（生涯迴圈、訓練公式、比賽模擬、事件、馬匹生成、賽事日曆、AI對手、獎金/聲望基準值、引退結算）、美術風格方向、資料結構、UI流程規劃、遊戲名稱已全數定案，規格面完整，可以直接開始動手實作原型。
 
 ## 尚待決定的部分
 各畫面的詳細文字內容/按鈕標籤、飼料/馬廄管理等長線擴充系統、正式美術風格（待核心玩法驗證後再回頭處理）。
