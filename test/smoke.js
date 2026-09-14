@@ -21,7 +21,10 @@ for (let run = 0; run < 300; run++) {
       const scheduled = getScheduledRace(state);
       let result;
       if (scheduled && Math.random() < 0.6) {
-        result = doRaceAction(state, scheduled, ["short", "mile", "middle", "long"][randInt(0, 3)]);
+        // 未勝利賽已由 getScheduledRace() 依 career.chosenDistanceCat 決定距離；
+        // 這裡的隨機距離同時當作引退紀念賽與新馬戰的自選距離（v0.0.3：新馬戰改四距離自選）
+        const randDist = ["short", "mile", "middle", "long"][randInt(0, 3)];
+        result = doRaceAction(state, scheduled, randDist, randDist);
       } else {
         const stage = getStage(career.turn);
         if (stage.trainingAllowed && Math.random() < 0.7) {

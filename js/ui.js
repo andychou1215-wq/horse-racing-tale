@@ -11,6 +11,7 @@ window.UI = {
     pendingAfterEvent: null,
     currentRaceDef: null,
     retireDistanceCat: "mile",
+    maidenDistanceCat: null,
     lastActionResult: null,
     animTick: 0,
     animTimer: null,
@@ -228,19 +229,28 @@ function renderRacePreview() {
     distancePicker = `<h3>選擇引退紀念賽距離</h3><div class="row">
       ${DISTANCE_CAT_ORDER.map((catId) => `<button class="btn ${UI.state.retireDistanceCat === catId ? "" : "secondary"}" data-action="select-retire-distance" data-cat="${catId}">${distanceCatLabel(catId)}（${RETIREMENT_DISTANCE_MAP[catId]}m）</button>`).join("")}
     </div>`;
+  } else if (def.grade === "maiden") {
+    distancePicker = `<h3>選擇新馬戰出賽距離</h3>
+      <p class="muted">請選擇這匹馬要挑戰哪一種距離。若這場未獲勝，第6、8回合的未勝利賽會自動沿用這裡選擇的距離，不會再問一次。</p>
+      <div class="row">
+      ${DISTANCE_CAT_ORDER.map((catId) => `<button class="btn ${UI.state.maidenDistanceCat === catId ? "" : "secondary"}" data-action="select-maiden-distance" data-cat="${catId}">${distanceCatLabel(catId)}（${RETIREMENT_DISTANCE_MAP[catId]}m）</button>`).join("")}
+    </div>`;
   }
-  const distanceCat = def.grade === "retirementRace" ? UI.state.retireDistanceCat : def.distanceCat;
-  const distance = def.grade === "retirementRace" ? RETIREMENT_DISTANCE_MAP[distanceCat] : def.distance;
+  const distanceCat = def.grade === "retirementRace" ? UI.state.retireDistanceCat
+    : def.grade === "maiden" ? UI.state.maidenDistanceCat
+    : def.distanceCat;
+  const distance = distanceCat ? RETIREMENT_DISTANCE_MAP[distanceCat] : null;
+  const canConfirm = def.grade !== "maiden" || !!UI.state.maidenDistanceCat;
 
   return `
     ${renderStatusBar()}
     <div class="panel">
       <h2>${def.name}</h2>
-      <p>${gradeBadge(def.grade === "retirementRace" ? "特別賽" : gradeInfo.name)} ${distanceCatLabel(distanceCat)}（${distance}m）</p>
+      <p>${gradeBadge(def.grade === "retirementRace" ? "特別賽" : gradeInfo.name)} ${distanceCat ? `${distanceCatLabel(distanceCat)}（${distance}m）` : "尚未選擇距離"}</p>
       <p class="muted">出賽馬數：${gradeInfo.fieldSize} 匹（含玩家）</p>
       ${distancePicker}
       <div class="row">
-        <button class="btn danger" data-action="confirm-race">確認出賽</button>
+        <button class="btn danger" data-action="confirm-race" ${canConfirm ? "" : "disabled"}>確認出賽</button>
         <button class="btn secondary" data-action="back-to-career">取消，返回</button>
       </div>
     </div>

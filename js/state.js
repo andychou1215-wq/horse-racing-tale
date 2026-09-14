@@ -33,6 +33,9 @@ function saveState(state) {
   }
 }
 
+// 距離分類 → 公尺數對照表（新馬戰／未勝利賽自選距離、引退紀念賽自選距離皆共用此表）
+const DISTANCE_CAT_METERS = { short: 1200, mile: 1600, middle: 2000, long: 3000 };
+
 function newCareer() {
   return {
     turn: 1,
@@ -44,6 +47,7 @@ function newCareer() {
     maidenWon: null,
     nonWinnerAttempts: 0,
     openRaceUnlocked: false,
+    chosenDistanceCat: null, // 玩家在新馬戰選擇的距離分類，未勝利賽（第6/8回合）自動沿用
     trainingStreak: { stat: null, count: 0 },
     activeBuffs: [],
     raceHistory: [],
@@ -92,10 +96,13 @@ function popInjuryRiskBonus(career) {
 function getScheduledRace(state) {
   const career = state.currentRun.career;
   const turn = career.turn;
-  if (turn === 3) return { name: "新馬戰", grade: "maiden", distanceCat: "short", distance: 1200 };
+  // v0.0.3：新馬戰不再固定短距離，距離改由玩家在出賽預覽畫面自選（distanceCat/distance 留空，等 doRaceAction 決定）
+  if (turn === 3) return { name: "新馬戰", grade: "maiden", distanceCat: null, distance: null };
   if (NON_WINNER_TURNS.includes(turn)) {
     if (!career.maidenWon) {
-      return { name: `未勝利賽`, grade: "nonWinner", distanceCat: "mile", distance: 1600 };
+      // 未勝利賽沿用玩家在新馬戰選擇的距離類別，不再另外詢問（定案方案1，見測試紀錄.md v0.0.2）
+      const catId = career.chosenDistanceCat || "mile";
+      return { name: `未勝利賽`, grade: "nonWinner", distanceCat: catId, distance: DISTANCE_CAT_METERS[catId] };
     }
     return null;
   }
@@ -163,9 +170,10 @@ function doRestAction(state) {
   return result;
 }
 
-const RETIREMENT_DISTANCE_MAP = { short: 1200, mile: 1600, middle: 2000, long: 3000 };
+// 保留舊名稱作為別名，避免其他地方（如 ui.js）誤用時找不到定義
+const RETIREMENT_DISTANCE_MAP = DISTANCE_CAT_METERS;
 
-function doRaceAction(state, raceDefIn, retirementDistanceCat) {
+function doRaceAction(state, raceDefIn, retirementDistanceCat, maidenDistanceCat) {
   const career = state.currentRun.career;
   const horse = state.currentRun.horse;
   const bonus = popInjuryRiskBonus(career);
@@ -173,7 +181,12 @@ function doRaceAction(state, raceDefIn, retirementDistanceCat) {
   let def = raceDefIn;
   if (def.grade === "retirementRace") {
     const catId = retirementDistanceCat || "mile";
-    def = { ...def, distanceCat: catId, distance: RETIREMENT_DISTANCE_MAP[catId] };
+    def = { ...def, distanceCat: catId, distance: DISTANCE_CAT_METERS[catId] };
+  } else if (def.grade === "maiden") {
+    // 玩家在出賽預覽畫面自選的距離；記錄到 career，未勝利賽（若觸發）自動沿用
+    const catId = maidenDistanceCat || career.chosenDistanceCat || "short";
+    def = { ...def, distanceCat: catId, distance: DISTANCE_CAT_METERS[catId] };
+    career.chosenDistanceCat = catId;
   }
   const turnOfRace = career.turn;
   const enduranceCoef = DISTANCE_CATEGORIES[def.distanceCat].enduranceCoef;

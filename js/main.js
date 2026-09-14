@@ -46,7 +46,7 @@ function handleRest() {
 
 function handleConfirmRace() {
   const def = UI.state.currentRaceDef;
-  const result = doRaceAction(gameState, def, UI.state.retireDistanceCat);
+  const result = doRaceAction(gameState, def, UI.state.retireDistanceCat, UI.state.maidenDistanceCat);
   UI.state.lastActionResult = result;
   UI.state.screen = "raceAnim";
   renderApp();
@@ -105,11 +105,16 @@ function handleAction(action, el) {
     case "go-race-preview":
       UI.state.currentRaceDef = getScheduledRace(gameState);
       UI.state.retireDistanceCat = "mile";
+      UI.state.maidenDistanceCat = null;
       UI.state.screen = "racePreview";
       renderApp();
       break;
     case "select-retire-distance":
       UI.state.retireDistanceCat = el.dataset.cat;
+      renderApp();
+      break;
+    case "select-maiden-distance":
+      UI.state.maidenDistanceCat = el.dataset.cat;
       renderApp();
       break;
     case "confirm-race":

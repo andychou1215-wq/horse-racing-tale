@@ -1,7 +1,7 @@
 // constants.js — 全域數值設定，數字皆取自專案規格文件；部分未明訂細節（標註 NOTE）為原型階段的合理預設值，之後可依實測調整。
 "use strict";
 
-const GAME_VERSION = "v0.0.2";
+const GAME_VERSION = "v0.0.3";
 
 const STAT_CAP_PERMANENT = 160;
 const STAT_CAP_TEMP = 170;
@@ -77,8 +77,8 @@ const FATIGUE_CRITICAL_THRESHOLD = 95;
 const FATIGUE_CRITICAL_CHECK_PROB = 0.20;
 
 // 賽事日曆：第3/6/8回合為新星期分支邏輯（於 state.js 動態判定），其餘為固定排程
+// 第3回合新馬戰不在此表列出固定距離——v0.0.3起改由玩家於出賽預覽畫面自選距離（見 state.js getScheduledRace()/doRaceAction()）
 const RACE_CALENDAR_FIXED = {
-  3: { name: "新馬戰", grade: "maiden", distanceCat: "short", distance: 1200 },
   10: { name: "春季公開賽", grade: "open", distanceCat: "middle", distance: 2000 },
   13: { name: "一哩錦標賽", grade: "open", distanceCat: "mile", distance: 1600 },
   16: { name: "長距離挑戰賽", grade: "open", distanceCat: "long", distance: 3000 },

@@ -79,6 +79,11 @@ async function main() {
         }
       }
     } else if (screen === "racePreview") {
+      const raceDef = window.UI.state.currentRaceDef;
+      if (raceDef && raceDef.grade === "maiden" && !window.UI.state.maidenDistanceCat) {
+        // 模擬玩家在新馬戰預覽畫面自選距離（v0.0.3：新馬戰距離自選）
+        clickAction("select-maiden-distance");
+      }
       clickAction("confirm-race");
       sawRaceAnim = true;
     } else if (screen === "raceAnim") {
