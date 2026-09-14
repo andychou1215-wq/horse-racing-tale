@@ -49,9 +49,25 @@ async function main() {
   console.log("畫面：", window.UI.state.screen);
   if (window.UI.state.screen !== "newHorse") throw new Error("應進入新馬生成畫面");
 
+  // v0.0.4 回歸測試：取名後點選其他互動（觸發整頁重繪）不應把馬名重置回預設值
+  {
+    const nameInput = doc.querySelector("#horseNameInput");
+    nameInput.value = "測試馬";
+    nameInput.dispatchEvent(new window.Event("input", { bubbles: true }));
+    clickAction("select-style"); // 任何會呼叫 renderApp() 整頁重繪的互動
+    const nameInputAfter = doc.querySelector("#horseNameInput");
+    if (nameInputAfter.value !== "測試馬") {
+      throw new Error(`取名後觸發重繪，馬名被重置：預期"測試馬"，實際"${nameInputAfter.value}"`);
+    }
+    console.log("馬名重繪後保留：", nameInputAfter.value);
+  }
+
   clickAction("confirm-new-horse");
   console.log("畫面：", window.UI.state.screen);
   if (window.UI.state.screen !== "careerMain") throw new Error("應進入生涯主畫面");
+  if (window.gameState.currentRun.horse.name !== "測試馬") {
+    throw new Error("確認開始生涯後，馬名未正確套用玩家輸入");
+  }
 
   let guard = 0;
   let sawRaceAnim = false, sawEvent = false, sawRetirement = false;

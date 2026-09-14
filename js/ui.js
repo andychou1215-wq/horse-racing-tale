@@ -113,7 +113,7 @@ function renderNewHorseScreen() {
     <div class="panel">
       <h2>新馬生成</h2>
       <p class="muted">為牠取個名字，開始牠的三年生涯。</p>
-      <input type="text" id="horseNameInput" placeholder="馬匹名稱" value="${escapeHtml(UI.state.horseNameInput || h.name)}" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;margin-bottom:10px;">
+      <input type="text" id="horseNameInput" placeholder="馬匹名稱" value="${escapeHtml(UI.state.horseNameInput || h.name)}" oninput="UI.state.horseNameInput=this.value" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;margin-bottom:10px;">
       <div class="between">
         <div>${tierBadge(h.qualityTier, h.qualityTierName)} <span class="muted">總點數約 ${Object.values(h.stats).reduce((a,b)=>a+b,0)}</span></div>
         <button class="btn secondary" data-action="regen-horse">重新生成</button>
