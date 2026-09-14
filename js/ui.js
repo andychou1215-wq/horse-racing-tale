@@ -67,7 +67,7 @@ function renderTitleScreen() {
   return `
     <div class="title-hero">
       <h1>賽馬物語</h1>
-      <p class="muted">Horse Racing Tale</p>
+      <p class="muted">Horse Racing Tale ${GAME_VERSION}</p>
     </div>
     <div class="panel center">
       ${hasRun ? `<button class="btn block" data-action="continue-game">繼續生涯（第 ${gameState.currentRun.career.turn} / ${TOTAL_TURNS} 回合）</button>` : ""}
@@ -178,9 +178,12 @@ function renderCareerMain() {
   const career = state.currentRun.career;
   const stage = getStage(career.turn);
   const scheduledRace = getScheduledRace(state);
+  const isMandatoryRace = !!scheduledRace && scheduledRace.grade === "maiden";
 
   let actionHtml = "";
-  if (!stage.trainingAllowed) {
+  if (isMandatoryRace) {
+    actionHtml += `<p class="muted">新馬戰是生涯必經的第一戰，本回合必須出賽，無法訓練或休息。</p>`;
+  } else if (!stage.trainingAllowed) {
     actionHtml += `<p class="muted">引退期不開放訓練，只能選擇休息${scheduledRace ? "或出賽" : ""}。</p>`;
   } else {
     actionHtml += `<h3>訓練</h3><div class="row">`;
@@ -199,7 +202,7 @@ function renderCareerMain() {
   }
 
   actionHtml += `<h3>其他行動</h3><div class="row">
-    <button class="btn" data-action="do-rest">休息</button>
+    ${isMandatoryRace ? "" : `<button class="btn" data-action="do-rest">休息</button>`}
     ${scheduledRace ? `<button class="btn danger" data-action="go-race-preview">出賽：${scheduledRace.name}</button>` : ""}
   </div>`;
 
