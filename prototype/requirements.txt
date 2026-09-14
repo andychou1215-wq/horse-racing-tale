@@ -1,3 +1,0 @@
-pytest>=7.0
-openpyxl>=3.1  # 僅供 tools/regen_reference.py 從 xlsx 重新產生測試資料時使用
-flask>=3.0     # 僅供 webapp/ 網頁UI使用
