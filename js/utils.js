@@ -56,13 +56,9 @@ function gradeFromDiff(diff) {
   return APTITUDE_GRADE_TABLE[APTITUDE_GRADE_TABLE.length - 1];
 }
 
-function rollStyleGrade() {
-  const r = weightedPick(STYLE_GRADE_PROB, "prob");
-  return r.grade;
-}
-
+// v0.0.6：跑法適性改用跟距離適性同一份等級加成表（APTITUDE_GRADE_TABLE），因為兩者現在都是「傾向軸模型」算出來的等級
 function styleGradeBonus(grade) {
-  const row = STYLE_GRADE_PROB.find((g) => g.grade === grade);
+  const row = APTITUDE_GRADE_TABLE.find((g) => g.grade === grade);
   return row ? row.bonus : 0;
 }
 

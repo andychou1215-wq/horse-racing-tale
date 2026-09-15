@@ -38,13 +38,18 @@ function generateDistanceAptitude(meanOverride) {
   return { position, grades };
 }
 
-// 跑法適性：四種各自獨立鐘形分布抽樣
-function generateStyleAptitude() {
+// 跑法傾向軸模型（v0.0.6）：比照距離適性，主戰位置常態分布 → 各跑法與該位置差距 → 等級，
+// 讓相鄰跑法（例如領逃+先行）自然容易共存、對立兩端（領逃 vs 後追）自然互斥，取代原本四種跑法各自獨立抽樣的模型。
+function generateStyleAptitude(meanOverride) {
+  const mean = meanOverride === undefined ? 2.5 : meanOverride;
+  let position = randNormal(mean, 0.7);
+  position = clamp(position, 1.0, 4.0);
   const grades = {};
   STYLE_LIST.forEach((s) => {
-    grades[s.id] = rollStyleGrade();
+    const diff = Math.abs(s.position - position);
+    grades[s.id] = gradeFromDiff(diff).grade;
   });
-  return grades;
+  return { position, grades };
 }
 
 function bestStyle(styleGrades) {
@@ -60,7 +65,7 @@ function generateHorse(name, opts) {
   opts = opts || {};
   const core = generateCoreStats(opts.qualityProbOverride);
   const dist = generateDistanceAptitude(opts.distanceMeanOverride);
-  const style = generateStyleAptitude();
+  const style = generateStyleAptitude(opts.styleMeanOverride);
   return {
     name: name || "無名馬",
     qualityTier: core.tierId,
@@ -70,9 +75,10 @@ function generateHorse(name, opts) {
     aptitudes: {
       distanceMainPosition: dist.position,
       distanceGrades: dist.grades,
-      styleGrades: style,
+      styleMainPosition: style.position,
+      styleGrades: style.grades,
     },
-    chosenStyle: bestStyle(style),
+    chosenStyle: bestStyle(style.grades),
   };
 }
 

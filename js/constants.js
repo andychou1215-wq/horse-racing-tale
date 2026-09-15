@@ -1,7 +1,7 @@
 // constants.js — 全域數值設定，數字皆取自專案規格文件；部分未明訂細節（標註 NOTE）為原型階段的合理預設值，之後可依實測調整。
 "use strict";
 
-const GAME_VERSION = "v0.0.5";
+const GAME_VERSION = "v0.0.6";
 
 const STAT_CAP_PERMANENT = 160;
 const STAT_CAP_TEMP = 170;
@@ -27,12 +27,14 @@ const DISTANCE_CATEGORIES = {
 };
 const DISTANCE_CAT_ORDER = ["short", "mile", "middle", "long"];
 
+// v0.0.6：跑法適性改採「跑法傾向軸」模型（比照距離適性），position 為該跑法在光譜上的位置
 const STYLE_LIST = [
-  { id: "front", name: "領逃" },
-  { id: "pace", name: "先行" },
-  { id: "mid", name: "居中" },
-  { id: "closer", name: "後追" },
+  { id: "front", name: "領逃", position: 1.0 },
+  { id: "pace", name: "先行", position: 2.0 },
+  { id: "mid", name: "居中", position: 3.0 },
+  { id: "closer", name: "後追", position: 4.0 },
 ];
+const STYLE_ORDER = ["front", "pace", "mid", "closer"];
 
 const APTITUDE_GRADE_TABLE = [
   { max: 0.3, grade: "S", bonus: 0.10 },
@@ -41,15 +43,6 @@ const APTITUDE_GRADE_TABLE = [
   { max: 1.8, grade: "C", bonus: -0.05 },
   { max: 2.3, grade: "D", bonus: -0.10 },
   { max: Infinity, grade: "E", bonus: -0.15 },
-];
-
-const STYLE_GRADE_PROB = [
-  { grade: "S", prob: 0.05, bonus: 0.10 },
-  { grade: "A", prob: 0.15, bonus: 0.05 },
-  { grade: "B", prob: 0.35, bonus: 0.0 },
-  { grade: "C", prob: 0.30, bonus: -0.05 },
-  { grade: "D", prob: 0.10, bonus: -0.10 },
-  { grade: "E", prob: 0.05, bonus: -0.15 },
 ];
 
 const STAGES = [
