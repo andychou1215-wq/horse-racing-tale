@@ -158,6 +158,27 @@ function renderStatusBar() {
   `;
 }
 
+// 唯讀版跑法適性格線（生涯主畫面用，不可點選切換跑法，避免跟新馬生成畫面的可選版混淆）
+function renderStyleGridReadonly(h) {
+  return `<div class="aptitude-grid">${STYLE_LIST.map((s) => `
+    <div class="aptitude-cell ${h.chosenStyle === s.id ? "selected" : ""}">
+      <div>${s.name}</div><div class="badge grade-${h.aptitudes.styleGrades[s.id]}">${h.aptitudes.styleGrades[s.id]}</div>
+    </div>`).join("")}</div>`;
+}
+
+// 生涯主畫面的距離／跑法適性摘要，預設收合，供玩家隨時查看忘記的適性（不可在此變更主戰跑法）
+function renderHorseAptitudeSummary(h) {
+  return `
+    <details class="aptitude-summary">
+      <summary>查看距離／跑法適性</summary>
+      <h3>距離適性</h3>
+      ${renderAptitudeGrid(h.aptitudes.distanceGrades)}
+      <h3>跑法適性（主戰：${styleLabel(h.chosenStyle)}）</h3>
+      ${renderStyleGridReadonly(h)}
+    </details>
+  `;
+}
+
 function renderHorsePanel() {
   const h = gameState.currentRun.horse;
   return `
@@ -170,6 +191,7 @@ function renderHorsePanel() {
         <div class="stat-line"><span>幸運/穩定性</span><b>${Math.round(h.stats.luck)}</b></div>
       </div>
       <p class="muted">主戰跑法：${styleLabel(h.chosenStyle)}｜屬性上限 ${effectiveStatCap(h)}</p>
+      ${renderHorseAptitudeSummary(h)}
     </div>
   `;
 }

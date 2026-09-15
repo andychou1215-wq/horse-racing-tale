@@ -201,3 +201,7 @@ table.history th, table.history td { border-bottom: 1px solid var(--line); paddi
 .title-hero h1 { font-size: 2rem; margin-bottom: 4px; }
 
 .warn-text { color: var(--bad); font-weight: bold; }
+
+.aptitude-summary { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.aptitude-summary summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; }
+.aptitude-summary h3 { font-size: 0.95rem; margin-top: 10px; }
