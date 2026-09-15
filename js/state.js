@@ -82,6 +82,12 @@ function startNewRun(state, horseNameOrObject, fameExchangeIds) {
   if (fameExchangeIds.includes("stat3each")) {
     ["speed", "stamina", "power", "luck"].forEach((k) => addStatPermanent(horse, k, 3));
   }
+  // v0.0.7：兌換後實際扣除對應點數（data-structure.md／game-loop.md 皆規定要扣點，先前版本漏寫）
+  const fameCost = fameExchangeIds.reduce((sum, id) => {
+    const tier = FAME_EXCHANGE_TIERS.find((t) => t.id === id);
+    return sum + (tier ? tier.threshold : 0);
+  }, 0);
+  state.meta.legacyFamePoints = Math.max(0, (state.meta.legacyFamePoints || 0) - fameCost);
   state.currentRun = { horse, career: newCareer() };
   saveState(state);
   return state.currentRun;
