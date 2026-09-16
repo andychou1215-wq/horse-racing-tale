@@ -1,7 +1,7 @@
 // constants.js — 全域數值設定，數字皆取自專案規格文件；部分未明訂細節（標註 NOTE）為原型階段的合理預設值，之後可依實測調整。
 "use strict";
 
-const GAME_VERSION = "v0.0.9";
+const GAME_VERSION = "v0.1.0";
 
 const STAT_CAP_PERMANENT = 160;
 const STAT_CAP_TEMP = 170;
@@ -44,6 +44,9 @@ const APTITUDE_GRADE_TABLE = [
   { max: 2.3, grade: "D", bonus: -0.10 },
   { max: Infinity, grade: "E", bonus: -0.15 },
 ];
+
+// v0.1.0：閘位系統——起跑階段依「閘位是否貼合跑法偏好」給予加成/懲罰，NOTE: 文件未給精確數值，原型階段自訂上限值
+const GATE_BONUS_MAX = 0.08;
 
 const STAGES = [
   { id: "newcomer", name: "新星期", turnStart: 1, turnEnd: 8, trainingMult: 1.2, trainingAllowed: true },

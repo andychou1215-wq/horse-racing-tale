@@ -235,6 +235,7 @@ function doRaceAction(state, raceDefIn, retirementDistanceCat, maidenDistanceCat
     turn: turnOfRace, raceName: def.name, grade: def.grade, distance: def.distance,
     placement: finalPlacement, time: Math.round(simResult.playerEntry.time * 10) / 10,
     prizeEarned: Math.round(prize), reputationEarned: Math.round(payout.rep * 10) / 10,
+    gate: simResult.playerEntry.gate, // v0.1.0：閘位系統，記錄玩家該場比賽抽到的出發閘位
   });
 
   saveState(state);

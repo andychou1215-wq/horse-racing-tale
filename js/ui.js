@@ -282,16 +282,18 @@ function renderRacePreview() {
 function renderRaceAnim() {
   const sim = UI.state.lastActionResult.raceSimResult;
   const tick = Math.min(UI.state.animTick, sim.numTicks - 1);
+  const playerGate = sim.playerEntry.gate;
   const rows = sim.entries.map((e) => {
     const progress = clamp((e.log[tick] || 0), 0, 100);
     return `<div class="track">
       <div class="finish-line"></div>
-      <div class="marker ${e.isPlayer ? "player" : ""}" style="left:${progress}%">${escapeHtml(e.name)}</div>
+      <div class="marker ${e.isPlayer ? "player" : ""}" style="left:${progress}%">[${e.gate}] ${escapeHtml(e.name)}</div>
     </div>`;
   }).join("");
   return `
     <div class="panel">
       <h2>比賽進行中…</h2>
+      <p class="muted">你的閘位：第 ${playerGate} 閘（共 ${sim.entries.length} 閘，號碼越小越靠內側）</p>
       ${rows}
     </div>
   `;
@@ -319,7 +321,7 @@ function renderRaceResult() {
   const sim = result.raceSimResult;
   const rows = sim.entries.map((e) => `
     <div class="result-row ${e.isPlayer ? "player" : ""}">
-      <span>${e.placement}. ${escapeHtml(e.name)}</span>
+      <span>${e.placement}. [${e.gate}] ${escapeHtml(e.name)}</span>
       <span>${formatTime(e.time)}</span>
     </div>
   `).join("");

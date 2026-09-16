@@ -1,5 +1,6 @@
 // raceSim.js — 比賽模擬機制（race-simulation.md）
 // 採 tick 制模擬（20 ticks），phase 依短~中距離 0-20% / 20-70% / 70-100%，長距離改為 0-15% / 15-75% / 75-100%
+// v0.1.0：新增閘位系統，起跑階段依閘位是否貼合跑法偏好給予加成/懲罰（見 computeGateBonus/assignGates）
 "use strict";
 
 const NUM_TICKS = 20;
@@ -30,6 +31,29 @@ function phaseAt(tickIdx, numTicks, bounds) {
   return "final";
 }
 
+// 閘位系統（v0.1.0，race-simulation.md「閘位系統」一節）：出發前隨機抽籤決定各馬閘位號碼，
+// 內側閘位（號碼小）有利領逃／先行等前段卡位型跑法，外側閘位（號碼大）有利居中／後追等後段爆發型跑法，
+// 效果只作用於起跑階段（呼應「起跑階段：決定初始站位順序，跑法風格影響最大」的既有敘述），中盤/衝刺不受影響。
+function assignGates(entries) {
+  const n = entries.length;
+  const nums = Array.from({ length: n }, (_, i) => i + 1);
+  for (let i = nums.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    const tmp = nums[i]; nums[i] = nums[j]; nums[j] = tmp;
+  }
+  entries.forEach((e, i) => { e.gate = nums[i]; });
+}
+
+// gatePos：0(最內側)~1(最外側)；stylePref：依跑法在跑法傾向軸上的位置換算出的閘位偏好（領逃=0偏內側～後追=1偏外側）；
+// 閘位越貼合該跑法的偏好，加成越接近 +GATE_BONUS_MAX，站在光譜完全相反端則懲罰同等幅度。
+function computeGateBonus(styleId, gate, fieldSize) {
+  if (!gate || fieldSize <= 1) return 0;
+  const gatePos = (gate - 1) / (fieldSize - 1);
+  const styleInfo = STYLE_LIST.find((s) => s.id === styleId);
+  const stylePref = styleInfo ? (styleInfo.position - 1) / 3 : 0.5;
+  return GATE_BONUS_MAX * (1 - 2 * Math.abs(gatePos - stylePref));
+}
+
 // 套用 nextRaceOnly 暫時 buff 到參賽用的統計快照（不影響永久屬性）
 function buildRaceStatSnapshot(horse, career) {
   const snap = { speed: horse.stats.speed, stamina: horse.stats.stamina, power: horse.stats.power, luck: horse.stats.luck, enduranceMult: 1.0 };
@@ -51,7 +75,7 @@ function consumeNextRaceBuffs(career) {
   career.activeBuffs = career.activeBuffs.filter((b) => b.scope !== "nextRaceOnly");
 }
 
-function simulateOneHorse(horse, statSnap, distanceCatId, enduranceCoef, numTicks, bounds) {
+function simulateOneHorse(horse, statSnap, distanceCatId, enduranceCoef, numTicks, bounds, gateBonus) {
   const style = horse.chosenStyle;
   const powerTable = STYLE_PHASE_POWER[style];
   const fatigueTable = STYLE_PHASE_FATIGUE[style];
@@ -70,6 +94,7 @@ function simulateOneHorse(horse, statSnap, distanceCatId, enduranceCoef, numTick
   for (let t = 0; t < numTicks; t++) {
     const phase = phaseAt(t, numTicks, bounds);
     let inc = perTickBase * (1 + (statSnap.speed - 100) / 300) * powerTable[phase] * distBonus * styleBonus;
+    if (phase === "start") inc *= (1 + gateBonus); // v0.1.0：閘位加成/懲罰只作用於起跑階段
     if (raceFatigue > fatigueThreshold) inc *= 0.85; // 後繼無力
     if (phase === "final") {
       inc += perTickBase * 0.40 * ((statSnap.power - 100) / 300) * powerTable.final;
@@ -95,10 +120,14 @@ function simulateRace(raceDef, playerHorse, career, aiHorses) {
   const entries = [{ id: "player", name: playerHorse.name, isPlayer: true, horse: playerHorse, snap: playerSnap }];
   aiHorses.forEach((h, i) => entries.push({ id: `ai${i}`, name: h.name, isPlayer: false, horse: h, snap: buildRaceStatSnapshot(h, null) }));
 
+  assignGates(entries);
+
   entries.forEach((e) => {
-    const res = simulateOneHorse(e.horse, e.snap, distanceCatId, enduranceCoef, NUM_TICKS, bounds);
+    const gateBonus = computeGateBonus(e.horse.chosenStyle, e.gate, entries.length);
+    const res = simulateOneHorse(e.horse, e.snap, distanceCatId, enduranceCoef, NUM_TICKS, bounds, gateBonus);
     e.finalScore = res.finalScore;
     e.log = res.log;
+    e.gateBonus = gateBonus;
   });
 
   const avgScore = entries.reduce((s, e) => s + e.finalScore, 0) / entries.length;

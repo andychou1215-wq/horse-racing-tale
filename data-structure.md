@@ -81,7 +81,7 @@
 - `openRaceUnlocked`：新馬賽獲勝、未勝利賽獲勝、或第10回合安全機制觸發時設為`true`。
 - `trainingStreak`：追蹤「同屬性連續訓練N次」，供 events.md 的士氣低落／蛻變成長判定使用，更換訓練屬性即重置。
 - `activeBuffs`：格式 `{ "target": "speed", "amount": 5, "scope": "nextRaceOnly" | { "expiresAtTurn": 12 } }`，統一存放事件/覺醒等暫時加成，套用時檢查170的暫時上限。
-- `raceHistory`：每場比賽一筆 `{ "turn", "raceName", "grade", "distance", "placement", "time", "prizeEarned", "reputationEarned" }`，是 retirement-summary.md 計算戰績分與結算畫面戰績列表的資料來源。
+- `raceHistory`：每場比賽一筆 `{ "turn", "raceName", "grade", "distance", "placement", "time", "prizeEarned", "reputationEarned", "gate" }`，是 retirement-summary.md 計算戰績分與結算畫面戰績列表的資料來源。`gate`（v0.1.0新增）記錄玩家該場比賽抽到的出發閘位號碼，見 race-simulation.md「閘位系統」一節。
 - `eventLog`：每次觸發事件一筆 `{ "turn", "eventName", "category" }`，供 retirement-summary.md 的稀有正面事件次數統計使用。
 - `retirementReason`：`"normal" | "重大傷病" | "醜聞風波" | "天災意外" | "伯樂相中" | "疲勞累積"`，決定 retirement-summary.md 的生涯完整度倍率。
 
