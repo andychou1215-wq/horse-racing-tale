@@ -1,7 +1,7 @@
 // constants.js — 全域數值設定，數字皆取自專案規格文件；部分未明訂細節（標註 NOTE）為原型階段的合理預設值，之後可依實測調整。
 "use strict";
 
-const GAME_VERSION = "v0.0.8";
+const GAME_VERSION = "v0.0.9";
 
 const STAT_CAP_PERMANENT = 160;
 const STAT_CAP_TEMP = 170;

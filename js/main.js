@@ -83,6 +83,19 @@ function handleAction(action, el) {
       break;
     }
     case "confirm-new-horse": {
+      const fameCost = UI.state.selectedFame.reduce((sum, id) => {
+        const tier = FAME_EXCHANGE_TIERS.find((t) => t.id === id);
+        return sum + (tier ? tier.threshold : 0);
+      }, 0);
+      if (fameCost > (gameState.meta.legacyFamePoints || 0)) {
+        UI.state.confirmDialog = {
+          title: "點數不足",
+          text: "兌換所需的點數超出目前擁有的點數，請重新選擇。",
+          alertOnly: true,
+        };
+        renderApp();
+        break;
+      }
       const nameInput = document.getElementById("horseNameInput");
       const name = (nameInput && nameInput.value.trim()) || "無名馬";
       UI.state.previewHorse.name = name;

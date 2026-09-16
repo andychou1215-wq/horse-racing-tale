@@ -350,14 +350,17 @@ function renderEventModal(ev) {
 
 // ---------- 二次確認彈窗 ----------
 function renderConfirmDialog(dialog) {
+  const buttons = dialog.alertOnly
+    ? `<button class="btn secondary" data-action="confirm-no">確定</button>`
+    : `<button class="btn danger" data-action="confirm-yes">確定執行</button>
+       <button class="btn secondary" data-action="confirm-no">取消</button>`;
   return `
     <div class="confirm-overlay">
       <div class="confirm-box">
         <h3>${dialog.title}</h3>
         <p>${dialog.text}</p>
         <div class="row">
-          <button class="btn danger" data-action="confirm-yes">確定執行</button>
-          <button class="btn secondary" data-action="confirm-no">取消</button>
+          ${buttons}
         </div>
       </div>
     </div>
