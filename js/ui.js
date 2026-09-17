@@ -122,7 +122,7 @@ function renderNewHorseScreen() {
         <div class="stat-line"><span>速度</span><b>${Math.round(h.stats.speed)}</b></div>
         <div class="stat-line"><span>耐力</span><b>${Math.round(h.stats.stamina)}</b></div>
         <div class="stat-line"><span>爆發力</span><b>${Math.round(h.stats.power)}</b></div>
-        <div class="stat-line"><span>幸運/穩定性</span><b>${Math.round(h.stats.luck)}</b></div>
+        <div class="stat-line"><span>穩定性</span><b>${Math.round(h.stats.luck)}</b></div>
       </div>
       <h3>距離適性</h3>
       ${renderAptitudeGrid(h.aptitudes.distanceGrades)}
@@ -188,7 +188,7 @@ function renderHorsePanel() {
         <div class="stat-line"><span>速度</span><b>${Math.round(h.stats.speed)}</b></div>
         <div class="stat-line"><span>耐力</span><b>${Math.round(h.stats.stamina)}</b></div>
         <div class="stat-line"><span>爆發力</span><b>${Math.round(h.stats.power)}</b></div>
-        <div class="stat-line"><span>幸運/穩定性</span><b>${Math.round(h.stats.luck)}</b></div>
+        <div class="stat-line"><span>穩定性</span><b>${Math.round(h.stats.luck)}</b></div>
       </div>
       <p class="muted">主戰跑法：${styleLabel(h.chosenStyle)}｜屬性上限 ${effectiveStatCap(h)}</p>
       ${renderHorseAptitudeSummary(h)}
@@ -404,7 +404,7 @@ function renderRetirementSummary() {
         <div class="stat-line"><span>速度</span><b>${Math.round(horse.stats.speed)}</b></div>
         <div class="stat-line"><span>耐力</span><b>${Math.round(horse.stats.stamina)}</b></div>
         <div class="stat-line"><span>爆發力</span><b>${Math.round(horse.stats.power)}</b></div>
-        <div class="stat-line"><span>幸運/穩定性</span><b>${Math.round(horse.stats.luck)}</b></div>
+        <div class="stat-line"><span>穩定性</span><b>${Math.round(horse.stats.luck)}</b></div>
       </div>
       <h3>戰績列表</h3>
       ${historyRows ? `<table class="history"><tr><th>回合</th><th>賽事</th><th>等級</th><th>名次</th><th>時間</th></tr>${historyRows}</table>` : `<p class="muted">生涯尚未出賽過</p>`}

@@ -77,7 +77,7 @@ function deepClone(obj) {
 }
 
 function statLabel(id) {
-  return { speed: "速度", stamina: "耐力", power: "爆發力", luck: "幸運/穩定性" }[id] || id;
+  return { speed: "速度", stamina: "耐力", power: "爆發力", luck: "穩定性" }[id] || id;
 }
 
 function distanceCatLabel(id) {

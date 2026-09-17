@@ -15,7 +15,7 @@ function generateCoreStats(qualityProbOverride) {
   keys.forEach((k, i) => {
     let share;
     if (i === keys.length - 1) {
-      share = remain - allocated; // 剩餘誤差歸給最後一項（幸運/穩定性）
+      share = remain - allocated; // 剩餘誤差歸給最後一項（穩定性）
     } else {
       share = Math.round((weights[i] / wSum) * remain);
       allocated += share;
