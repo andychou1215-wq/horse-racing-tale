@@ -136,8 +136,10 @@ function simulateRace(raceDef, playerHorse, career, aiHorses) {
   const timeCoef = gradeInfo.timeCoef;
   const conv = TIME_CONVERSION_COEF[raceDef.distance] || 0.035;
 
-  entries.sort((a, b) => b.finalScore - a.finalScore);
-  entries.forEach((e, idx) => {
+  // v0.1.1修正：計算名次時改用複本排序，不動到 entries 原始順序（原始順序＝出賽名單/生成順序，
+  // 供 renderRaceAnim 依閘位固定排列賽道列；renderRaceResult 才需要依名次排序的清單）。
+  const ranked = entries.slice().sort((a, b) => b.finalScore - a.finalScore);
+  ranked.forEach((e, idx) => {
     e.placement = idx + 1;
     const t = baseTime * timeCoef - (e.finalScore - avgScore) * conv;
     e.time = Math.max(t, baseTime * 0.85);

@@ -283,7 +283,10 @@ function renderRaceAnim() {
   const sim = UI.state.lastActionResult.raceSimResult;
   const tick = Math.min(UI.state.animTick, sim.numTicks - 1);
   const playerGate = sim.playerEntry.gate;
-  const rows = sim.entries.map((e) => {
+  // v0.1.1修正：賽道列順序改依閘位號碼固定排列（複本排序，不動到 sim.entries 原始順序），
+  // 避免動畫還沒跑完，列的上下順序就先透露最終名次。
+  const laneOrder = sim.entries.slice().sort((a, b) => a.gate - b.gate);
+  const rows = laneOrder.map((e) => {
     const progress = clamp((e.log[tick] || 0), 0, 100);
     return `<div class="track">
       <div class="finish-line"></div>
@@ -319,7 +322,9 @@ function startRaceAnimation() {
 function renderRaceResult() {
   const result = UI.state.lastActionResult;
   const sim = result.raceSimResult;
-  const rows = sim.entries.map((e) => `
+  // v0.1.1修正：結果列表依名次排序（複本排序，sim.entries 本身已不再保證是名次順序）。
+  const rankedEntries = sim.entries.slice().sort((a, b) => a.placement - b.placement);
+  const rows = rankedEntries.map((e) => `
     <div class="result-row ${e.isPlayer ? "player" : ""}">
       <span>${e.placement}. [${e.gate}] ${escapeHtml(e.name)}</span>
       <span>${formatTime(e.time)}</span>
